@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Upload Syllabus — Life Dashboard{% endblock %}
+{% block content %}
+    <a class="back-link" href="{{ url_for('course_detail', course_id=course.id) }}">&larr; {{ course.name }}</a>
+    <h1>Upload Syllabus</h1>
+    <p class="subtitle">for {{ course.name }} &mdash; PDF or DOCX. AI will pull out assignments, due dates, and weights for you to review before anything is saved.</p>
+
+    {% if error %}
+    <div class="error-banner">{{ error }}</div>
+    {% endif %}
+
+    <div class="card">
+        <form class="stack" method="POST" enctype="multipart/form-data">
+            <label>Syllabus file
+                <input type="file" name="syllabus" accept=".pdf,.docx" required>
+            </label>
+            <button class="btn" type="submit">Extract Assignments</button>
+        </form>
+    </div>
+{% endblock %}

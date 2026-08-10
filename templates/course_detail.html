@@ -8,7 +8,10 @@
             <h1>{{ course.name }}</h1>
             <p class="subtitle">{{ course.professor }} &middot; {{ course.credit_hours }} credits &middot; {{ course.term }}</p>
         </div>
-        <a class="btn" href="{{ url_for('new_assignment', course_id=course.id) }}">+ Add Assignment</a>
+        <div class="button-group">
+            <a class="btn btn-secondary" href="{{ url_for('upload_syllabus', course_id=course.id) }}">Upload Syllabus</a>
+            <a class="btn" href="{{ url_for('new_assignment', course_id=course.id) }}">+ Add Assignment</a>
+        </div>
     </div>
 
     <div class="grade-summary">

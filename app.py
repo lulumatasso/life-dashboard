@@ -1,7 +1,9 @@
 import calendar as cal_module
+import os
 from datetime import date, datetime
 
-from flask import Flask, render_template, request, redirect, url_for
+from dotenv import load_dotenv
+from flask import Flask, render_template, request, redirect, url_for, session
 from models import (
     db,
     Course,
@@ -14,9 +16,13 @@ from models import (
     TRANSACTION_CATEGORIES,
     Todo,
 )
+import syllabus
+
+load_dotenv()
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///dashboard.db"
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-only-secret-for-local-use")
 db.init_app(app)
 
 with app.app_context():
@@ -157,6 +163,62 @@ def new_assignment(course_id):
         db.session.commit()
         return redirect(url_for("course_detail", course_id=course.id))
     return render_template("new_assignment.html", course=course, status_choices=STATUS_CHOICES)
+
+
+@app.route("/classes/<int:course_id>/syllabus/upload", methods=["GET", "POST"])
+def upload_syllabus(course_id):
+    course = Course.query.get_or_404(course_id)
+    if request.method == "POST":
+        file = request.files.get("syllabus")
+        if not file or not file.filename:
+            return render_template("upload_syllabus.html", course=course, error="Please choose a file.")
+        try:
+            text = syllabus.extract_text(file)
+            if not text.strip():
+                raise ValueError("Couldn't find any text in that file — is it a scanned image?")
+            items = syllabus.extract_assignments(text)
+        except Exception as exc:
+            return render_template("upload_syllabus.html", course=course, error=str(exc))
+
+        session["syllabus_course_id"] = course.id
+        session["syllabus_items"] = items
+        return redirect(url_for("review_syllabus", course_id=course.id))
+    return render_template("upload_syllabus.html", course=course, error=None)
+
+
+@app.route("/classes/<int:course_id>/syllabus/review", methods=["GET", "POST"])
+def review_syllabus(course_id):
+    course = Course.query.get_or_404(course_id)
+    items = session.get("syllabus_items")
+    if session.get("syllabus_course_id") != course.id or not items:
+        return redirect(url_for("upload_syllabus", course_id=course.id))
+
+    if request.method == "POST":
+        added = 0
+        for i in range(len(items)):
+            if not request.form.get(f"include_{i}"):
+                continue
+            name = request.form.get(f"name_{i}", "").strip()
+            if not name:
+                continue
+            due_date_raw = request.form.get(f"due_date_{i}")
+            weight_raw = request.form.get(f"weight_{i}")
+            db.session.add(
+                Assignment(
+                    course_id=course.id,
+                    name=name,
+                    due_date=datetime.strptime(due_date_raw, "%Y-%m-%d").date() if due_date_raw else None,
+                    weight=float(weight_raw) if weight_raw else None,
+                    status="Not started",
+                )
+            )
+            added += 1
+        db.session.commit()
+        session.pop("syllabus_items", None)
+        session.pop("syllabus_course_id", None)
+        return redirect(url_for("course_detail", course_id=course.id))
+
+    return render_template("review_syllabus.html", course=course, items=list(enumerate(items)))
 
 
 @app.route("/calendar")

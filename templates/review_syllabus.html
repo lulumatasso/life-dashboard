@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Review Extracted Items — Life Dashboard{% endblock %}
+{% block content %}
+    <a class="back-link" href="{{ url_for('course_detail', course_id=course.id) }}">&larr; {{ course.name }}</a>
+    <h1>Review Extracted Items</h1>
+    <p class="subtitle">Here's what the AI found in your syllabus for {{ course.name }}. Uncheck anything wrong, fix any dates or weights, then confirm.</p>
+
+    {% if items %}
+    <form method="POST">
+        <table class="assignment-table review-table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Name</th>
+                    <th>Due date</th>
+                    <th>Weight (%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i, item in items %}
+                <tr>
+                    <td><input type="checkbox" name="include_{{ i }}" checked></td>
+                    <td><input type="text" name="name_{{ i }}" value="{{ item.name or '' }}" class="review-input"></td>
+                    <td><input type="date" name="due_date_{{ i }}" value="{{ item.due_date or '' }}" class="review-input"></td>
+                    <td><input type="number" step="0.1" name="weight_{{ i }}" value="{{ item.weight if item.weight is not none else '' }}" class="review-input"></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="button-group review-actions">
+            <button class="btn" type="submit">Add Checked Items to Tracker</button>
+            <a class="btn btn-secondary" href="{{ url_for('course_detail', course_id=course.id) }}">Cancel</a>
+        </div>
+    </form>
+    {% else %}
+    <div class="empty-state">
+        <p>No items were found in that syllabus.</p>
+    </div>
+    {% endif %}
+{% endblock %}
