@@ -40,3 +40,20 @@ class Assignment(db.Model):
 
     def __repr__(self):
         return f"<Assignment {self.name}>"
+
+
+APPLICATION_STATUS_CHOICES = ["Applied", "Phone Screen", "Interview", "Offer", "Rejected", "Closed"]
+
+
+class Application(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    company = db.Column(db.String(120), nullable=False)
+    role = db.Column(db.String(120), nullable=False)
+    date_applied = db.Column(db.Date)
+    source = db.Column(db.String(200))
+    status = db.Column(db.String(20), default="Applied")
+    follow_up_date = db.Column(db.Date)
+    notes = db.Column(db.Text)
+
+    def __repr__(self):
+        return f"<Application {self.company} - {self.role}>"

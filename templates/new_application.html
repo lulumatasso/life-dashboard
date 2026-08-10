@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}New Application — Life Dashboard{% endblock %}
+{% block content %}
+    <a class="back-link" href="{{ url_for('applications') }}">&larr; Applications</a>
+    <h1>New Application</h1>
+    <p class="subtitle">Log a new internship or job application.</p>
+    <div class="card">
+        <form class="stack" method="POST">
+            <label>Company
+                <input type="text" name="company" required>
+            </label>
+            <label>Role
+                <input type="text" name="role" required>
+            </label>
+            <label>Date applied
+                <input type="date" name="date_applied">
+            </label>
+            <label>Source / link
+                <input type="text" name="source" placeholder="e.g. LinkedIn, referral, company site">
+            </label>
+            <label>Status
+                <select name="status">
+                    {% for choice in status_choices %}
+                    <option value="{{ choice }}">{{ choice }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Follow-up date (optional)
+                <input type="date" name="follow_up_date">
+            </label>
+            <label>Notes
+                <textarea name="notes" placeholder="Contact name, salary discussed, next steps..."></textarea>
+            </label>
+            <button class="btn btn-professional" type="submit">Add Application</button>
+        </form>
+    </div>
+{% endblock %}

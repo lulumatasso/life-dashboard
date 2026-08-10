@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ application.company }} — Life Dashboard{% endblock %}
+{% block content %}
+    <a class="back-link" href="{{ url_for('applications') }}">&larr; Applications</a>
+    <div class="page-header">
+        <div>
+            <h1>{{ application.company }}</h1>
+            <p class="subtitle">{{ application.role }}{% if application.date_applied %} &middot; applied {{ application.date_applied.strftime("%b %d, %Y") }}{% endif %}</p>
+        </div>
+        <span class="status-pill status-{{ application.status|lower|replace(' ', '-') }}">{{ application.status }}</span>
+    </div>
+
+    {% if application.source %}
+    <p class="subtitle">Source: {{ application.source }}</p>
+    {% endif %}
+
+    <div class="card">
+        <form class="stack" method="POST">
+            <label>Status
+                <select name="status">
+                    {% for choice in status_choices %}
+                    <option value="{{ choice }}" {% if application.status == choice %}selected{% endif %}>{{ choice }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Follow-up date
+                <input type="date" name="follow_up_date" value="{{ application.follow_up_date.isoformat() if application.follow_up_date else '' }}">
+            </label>
+            <label>Notes
+                <textarea name="notes">{{ application.notes or '' }}</textarea>
+            </label>
+            <button class="btn btn-professional" type="submit">Save</button>
+        </form>
+    </div>
+{% endblock %}

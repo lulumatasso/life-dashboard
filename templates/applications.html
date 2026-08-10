@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Applications — Life Dashboard{% endblock %}
+{% block content %}
+    <div class="page-header">
+        <div>
+            <h1>Applications</h1>
+            <p class="subtitle">Every internship and job you've applied to.</p>
+        </div>
+        <a class="btn btn-professional" href="{{ url_for('new_application') }}">+ New Application</a>
+    </div>
+
+    <div class="filter-bar">
+        <a class="filter-chip {% if not status_filter %}active{% endif %}" href="{{ url_for('applications') }}">All</a>
+        {% for choice in status_choices %}
+        <a class="filter-chip {% if status_filter == choice %}active{% endif %}" href="{{ url_for('applications', status=choice) }}">{{ choice }}</a>
+        {% endfor %}
+    </div>
+
+    {% if applications %}
+    <table class="assignment-table">
+        <thead>
+            <tr>
+                <th>Company</th>
+                <th>Role</th>
+                <th>Date Applied</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for app in applications %}
+            <tr class="clickable" onclick="window.location='{{ url_for('application_detail', application_id=app.id) }}'">
+                <td>{{ app.company }}</td>
+                <td>{{ app.role }}</td>
+                <td>{{ app.date_applied.strftime("%b %d, %Y") if app.date_applied else "—" }}</td>
+                <td><span class="status-pill status-{{ app.status|lower|replace(' ', '-') }}">{{ app.status }}</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>No applications yet. Add your first one to start tracking your search.</p>
+    </div>
+    {% endif %}
+{% endblock %}
