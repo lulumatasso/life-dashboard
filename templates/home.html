@@ -2,8 +2,80 @@
 {% block title %}Home — Life Dashboard{% endblock %}
 {% block content %}
     <h1>Hello, {{ name }} 👋</h1>
-    <p class="subtitle">Your life dashboard is alive.</p>
-    <div class="card">
-        <p>This is the start of your one-stop-shop. Head to <a href="{{ url_for('classes') }}">Classes</a> to see your courses.</p>
+    <p class="subtitle">{{ today.strftime("%A, %B %d, %Y") }} — here's what's on your plate.</p>
+
+    <div class="dashboard-grid">
+        <div class="panel panel-wide">
+            <div class="panel-header">
+                <span class="panel-icon">📚</span>
+                <h2>Current Classes</h2>
+                <a class="panel-link" href="{{ url_for('classes') }}">View all &rarr;</a>
+            </div>
+            {% if courses %}
+            <div class="mini-course-grid">
+                {% for course in courses %}
+                <a class="mini-course-card" href="{{ url_for('course_detail', course_id=course.id) }}">
+                    <span class="mini-course-name">{{ course.name }}</span>
+                    <span class="mini-course-meta">{{ course.term }}</span>
+                    {% if course.current_grade is not none %}
+                    <span class="badge grade-badge">{{ "%.1f"|format(course.current_grade) }}%</span>
+                    {% endif %}
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="subtitle">No classes yet. <a href="{{ url_for('new_class') }}">Add your first class</a>.</p>
+            {% endif %}
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-icon">⏰</span>
+                <h2>Upcoming Deadlines</h2>
+            </div>
+            {% if upcoming_assignments %}
+            <ul class="panel-list">
+                {% for a in upcoming_assignments %}
+                <li>
+                    <a href="{{ url_for('course_detail', course_id=a.course_id) }}">{{ a.name }}</a>
+                    <span class="panel-list-meta">{{ a.course.name }} &middot; {{ a.due_date.strftime("%b %d") }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="subtitle">Nothing due soon.</p>
+            {% endif %}
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-icon">💼</span>
+                <h2>Applications</h2>
+                <a class="panel-link" href="{{ url_for('applications') }}">View all &rarr;</a>
+            </div>
+            <p class="panel-stat"><span>{{ active_applications }}</span> active in your pipeline</p>
+            {% if recent_applications %}
+            <ul class="panel-list">
+                {% for app in recent_applications %}
+                <li>
+                    <a href="{{ url_for('application_detail', application_id=app.id) }}">{{ app.company }}</a>
+                    <span class="status-pill status-{{ app.status|lower|replace(' ', '-') }}">{{ app.status }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="subtitle">No applications logged yet. <a href="{{ url_for('new_application') }}">Add one</a>.</p>
+            {% endif %}
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-icon">🗓️</span>
+                <h2>Calendar</h2>
+                <a class="panel-link" href="{{ url_for('calendar_view') }}">Open &rarr;</a>
+            </div>
+            <p class="subtitle">See everything due this month across classes and applications, laid out day by day.</p>
+            <a class="btn btn-secondary" href="{{ url_for('calendar_view') }}">Go to full calendar</a>
+        </div>
     </div>
 {% endblock %}

@@ -14,7 +14,27 @@ with app.app_context():
 
 @app.route("/")
 def home():
-    return render_template("home.html", name="AvaLucia")
+    today = date.today()
+    courses = Course.query.all()
+    upcoming_assignments = (
+        Assignment.query.filter(Assignment.due_date >= today)
+        .order_by(Assignment.due_date)
+        .limit(5)
+        .all()
+    )
+    recent_applications = Application.query.order_by(Application.date_applied.desc()).limit(5).all()
+    active_applications = Application.query.filter(
+        Application.status.notin_(["Rejected", "Closed"])
+    ).count()
+    return render_template(
+        "home.html",
+        name="AvaLucia",
+        today=today,
+        courses=courses,
+        upcoming_assignments=upcoming_assignments,
+        recent_applications=recent_applications,
+        active_applications=active_applications,
+    )
 
 
 @app.route("/classes")
