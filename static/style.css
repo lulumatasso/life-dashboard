@@ -263,3 +263,82 @@ form.stack input:focus, form.stack select:focus {
 .back-link:hover {
     color: var(--text);
 }
+
+.btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+    background: var(--bg);
+}
+
+.calendar-nav {
+    display: flex;
+    gap: 8px;
+}
+
+.calendar-grid {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.calendar-grid th {
+    text-align: left;
+    padding: 8px 6px;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.calendar-cell {
+    vertical-align: top;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    height: 100px;
+    padding: 6px;
+    font-size: 0.8rem;
+}
+
+.calendar-cell.empty {
+    background: transparent;
+    border: none;
+}
+
+.calendar-cell.today {
+    background: rgba(108, 99, 214, 0.06);
+    border-color: var(--accent);
+}
+
+.calendar-day-number {
+    font-weight: 600;
+    font-size: 0.82rem;
+    margin-bottom: 4px;
+    color: var(--text-muted);
+}
+
+.calendar-cell.today .calendar-day-number {
+    color: var(--accent);
+}
+
+.calendar-event {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 5px;
+    margin-bottom: 3px;
+    text-decoration: none;
+    color: #fff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.calendar-event.category-academic { background: var(--academic); }
+.calendar-event.category-professional { background: var(--professional); }
+.calendar-event.category-financial { background: var(--financial); }
+.calendar-event.category-personal { background: var(--personal); }

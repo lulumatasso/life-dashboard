@@ -1,4 +1,5 @@
-from datetime import datetime
+import calendar as cal_module
+from datetime import date, datetime
 
 from flask import Flask, render_template, request, redirect, url_for
 from models import db, Course, Assignment, STATUS_CHOICES
@@ -62,6 +63,48 @@ def new_assignment(course_id):
         db.session.commit()
         return redirect(url_for("course_detail", course_id=course.id))
     return render_template("new_assignment.html", course=course, status_choices=STATUS_CHOICES)
+
+
+@app.route("/calendar")
+def calendar_view():
+    today = date.today()
+    year = request.args.get("year", type=int) or today.year
+    month = request.args.get("month", type=int) or today.month
+
+    weeks = cal_module.Calendar(firstweekday=6).monthdayscalendar(year, month)
+    days_in_month = cal_module.monthrange(year, month)[1]
+
+    assignments = Assignment.query.filter(
+        Assignment.due_date >= date(year, month, 1),
+        Assignment.due_date <= date(year, month, days_in_month),
+    ).all()
+
+    events_by_day = {}
+    for a in assignments:
+        events_by_day.setdefault(a.due_date.day, []).append(
+            {
+                "title": f"{a.name} — {a.course.name}",
+                "category": "academic",
+                "url": url_for("course_detail", course_id=a.course_id),
+            }
+        )
+
+    prev_month, prev_year = (12, year - 1) if month == 1 else (month - 1, year)
+    next_month, next_year = (1, year + 1) if month == 12 else (month + 1, year)
+
+    return render_template(
+        "calendar.html",
+        weeks=weeks,
+        events_by_day=events_by_day,
+        month_name=cal_module.month_name[month],
+        year=year,
+        month=month,
+        today=today,
+        prev_year=prev_year,
+        prev_month=prev_month,
+        next_year=next_year,
+        next_month=next_month,
+    )
 
 
 if __name__ == "__main__":
