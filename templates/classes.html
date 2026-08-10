@@ -1,18 +1,28 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>My Classes</title>
-</head>
-<body>
-    <h1>My Classes</h1>
-    <ul>
+{% extends "base.html" %}
+{% block title %}Classes — Life Dashboard{% endblock %}
+{% block content %}
+    <div class="page-header">
+        <div>
+            <h1>My Classes</h1>
+            <p class="subtitle">Everything you're enrolled in this term.</p>
+        </div>
+        <a class="btn" href="{{ url_for('new_class') }}">+ Add Class</a>
+    </div>
+
+    {% if courses %}
+    <div class="course-grid">
         {% for course in courses %}
-        <li>
-            <strong>{{ course.name }}</strong>
-            &mdash; {{ course.professor }}, {{ course.credit_hours }} credits ({{ course.term }})
-        </li>
+        <div class="course-card">
+            <h3>{{ course.name }}</h3>
+            <p class="meta">{{ course.professor }}</p>
+            <p class="meta">{{ course.credit_hours }} credits</p>
+            <span class="badge">{{ course.term }}</span>
+        </div>
         {% endfor %}
-    </ul>
-</body>
-</html>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>No classes yet. Add your first one to get started.</p>
+    </div>
+    {% endif %}
+{% endblock %}

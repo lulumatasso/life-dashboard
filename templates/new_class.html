@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Add Class — Life Dashboard{% endblock %}
+{% block content %}
+    <h1>Add a Class</h1>
+    <p class="subtitle">Add a new course to your dashboard.</p>
+    <div class="card">
+        <form class="stack" method="POST">
+            <label>Course name
+                <input type="text" name="name" required>
+            </label>
+            <label>Professor
+                <input type="text" name="professor">
+            </label>
+            <label>Credit hours
+                <input type="number" name="credit_hours" min="0" max="10">
+            </label>
+            <label>Term
+                <input type="text" name="term" placeholder="e.g. Fall 2026">
+            </label>
+            <button class="btn" type="submit">Add Class</button>
+        </form>
+    </div>
+{% endblock %}

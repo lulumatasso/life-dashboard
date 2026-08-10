@@ -1,11 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Life Dashboard</title>
-</head>
-<body>
-    <h1>Hello, {{ name }}!</h1>
-    <p>Your life dashboard is alive.</p>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}Home — Life Dashboard{% endblock %}
+{% block content %}
+    <h1>Hello, {{ name }} 👋</h1>
+    <p class="subtitle">Your life dashboard is alive.</p>
+    <div class="card">
+        <p>This is the start of your one-stop-shop. Head to <a href="{{ url_for('classes') }}">Classes</a> to see your courses.</p>
+    </div>
+{% endblock %}
