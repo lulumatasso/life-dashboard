@@ -435,6 +435,109 @@ form.stack input:focus, form.stack select:focus, form.stack textarea:focus {
 .calendar-event.category-financial { background: var(--financial); }
 .calendar-event.category-personal { background: var(--personal); }
 
+.stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.stat-value {
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.stat-value.income { color: var(--professional); }
+.stat-value.expense { color: var(--personal); }
+
+.budget-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 28px;
+    align-items: start;
+}
+
+.section-title {
+    font-family: "Inter", sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 14px;
+}
+
+.checkbox-label {
+    flex-direction: row !important;
+    align-items: center;
+    gap: 8px !important;
+    font-weight: 500 !important;
+    color: var(--text) !important;
+}
+
+.checkbox-label input {
+    width: auto;
+}
+
+.bar-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.bar-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 70px;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+}
+
+.bar-label {
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bar-track {
+    background: var(--surface-sunken);
+    border-radius: 999px;
+    height: 10px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    background: var(--financial);
+    height: 100%;
+    border-radius: 999px;
+}
+
+.bar-amount {
+    text-align: right;
+    font-weight: 600;
+}
+
+td.income { color: var(--professional); font-weight: 600; }
+td.expense { color: var(--personal); font-weight: 600; }
+
 .dashboard-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -565,8 +668,142 @@ form.stack input:focus, form.stack select:focus, form.stack textarea:focus {
     color: var(--text-muted);
 }
 
+.panel-subheading {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.mini-calendar-grid {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.mini-calendar-grid th {
+    text-align: center;
+    padding: 4px;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+}
+
+.mini-cell {
+    text-align: center;
+    vertical-align: top;
+    padding: 6px 2px;
+    height: 46px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+}
+
+.mini-cell.empty {
+    background: transparent;
+}
+
+.mini-cell.today {
+    background: rgba(92, 114, 133, 0.09);
+}
+
+.mini-day-number {
+    display: block;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.mini-cell.today .mini-day-number {
+    color: var(--accent);
+}
+
+.mini-dots {
+    display: flex;
+    justify-content: center;
+    gap: 3px;
+    margin-top: 3px;
+    min-height: 6px;
+}
+
+.mini-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.mini-dot.category-academic { background: var(--academic); }
+.mini-dot.category-professional { background: var(--professional); }
+.mini-dot.category-financial { background: var(--financial); }
+.mini-dot.category-personal { background: var(--personal); }
+
+.todo-add-form {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.todo-add-form input {
+    flex: 1;
+    padding: 9px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    font-family: inherit;
+    font-size: 0.9rem;
+    background: var(--surface);
+    color: var(--text);
+}
+
+.todo-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.todo-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 4px;
+    border-bottom: 1px solid var(--border);
+}
+
+.todo-list li:last-child {
+    border-bottom: none;
+}
+
+.todo-list input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent);
+}
+
+.todo-text {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+.todo-list li.done .todo-text {
+    text-decoration: line-through;
+    color: var(--text-muted);
+}
+
+.todo-delete-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px 6px;
+}
+
+.todo-delete-btn:hover {
+    color: var(--personal);
+}
+
 @media (max-width: 720px) {
-    .dashboard-grid {
+    .dashboard-grid, .stat-row, .budget-columns {
         grid-template-columns: 1fr;
     }
     .app-shell {

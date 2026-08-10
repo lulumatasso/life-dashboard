@@ -57,3 +57,33 @@ class Application(db.Model):
 
     def __repr__(self):
         return f"<Application {self.company} - {self.role}>"
+
+
+TRANSACTION_TYPES = ["Income", "Expense"]
+TRANSACTION_CATEGORIES = [
+    "Rent", "Food", "Subscriptions", "Transportation",
+    "Entertainment", "Utilities", "Income", "Other",
+]
+
+
+class Transaction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    description = db.Column(db.String(150), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    type = db.Column(db.String(10), nullable=False, default="Expense")
+    category = db.Column(db.String(30), default="Other")
+    date = db.Column(db.Date, nullable=False)
+    is_recurring = db.Column(db.Boolean, default=False)
+
+    def __repr__(self):
+        return f"<Transaction {self.description} {self.amount}>"
+
+
+class Todo(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.String(200), nullable=False)
+    done = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+    def __repr__(self):
+        return f"<Todo {self.text}>"

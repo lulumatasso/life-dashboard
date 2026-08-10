@@ -68,14 +68,64 @@
             {% endif %}
         </div>
 
-        <div class="panel">
+        <div class="panel panel-wide">
             <div class="panel-header">
                 <span class="panel-icon">🗓️</span>
                 <h2>Calendar</h2>
+                <span class="panel-subheading">{{ month_name }} {{ year }}</span>
                 <a class="panel-link" href="{{ url_for('calendar_view') }}">Open &rarr;</a>
             </div>
-            <p class="subtitle">See everything due this month across classes and applications, laid out day by day.</p>
-            <a class="btn btn-secondary" href="{{ url_for('calendar_view') }}">Go to full calendar</a>
+            <table class="mini-calendar-grid">
+                <thead>
+                    <tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr>
+                </thead>
+                <tbody>
+                    {% for week in weeks %}
+                    <tr>
+                        {% for day in week %}
+                        {% if day == 0 %}
+                        <td class="mini-cell empty"></td>
+                        {% else %}
+                        <td class="mini-cell {% if year == today.year and month == today.month and day == today.day %}today{% endif %}">
+                            <span class="mini-day-number">{{ day }}</span>
+                            <span class="mini-dots">
+                                {% for cat in day_categories.get(day, []) %}<span class="mini-dot category-{{ cat }}"></span>{% endfor %}
+                            </span>
+                        </td>
+                        {% endif %}
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="panel panel-wide">
+            <div class="panel-header">
+                <span class="panel-icon">✅</span>
+                <h2>Weekly To-Do List</h2>
+            </div>
+            <form class="todo-add-form" method="POST" action="{{ url_for('new_todo') }}">
+                <input type="text" name="text" placeholder="Add a task..." required>
+                <button class="btn btn-secondary" type="submit">Add</button>
+            </form>
+            {% if todos %}
+            <ul class="todo-list">
+                {% for todo in todos %}
+                <li class="{% if todo.done %}done{% endif %}">
+                    <form method="POST" action="{{ url_for('toggle_todo', todo_id=todo.id) }}">
+                        <input type="checkbox" onchange="this.form.submit()" {% if todo.done %}checked{% endif %}>
+                    </form>
+                    <span class="todo-text">{{ todo.text }}</span>
+                    <form method="POST" action="{{ url_for('delete_todo', todo_id=todo.id) }}">
+                        <button type="submit" class="todo-delete-btn" aria-label="Delete task">&times;</button>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="subtitle">No tasks yet. Add your first one above.</p>
+            {% endif %}
         </div>
     </div>
 {% endblock %}
