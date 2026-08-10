@@ -673,66 +673,34 @@ td.expense { color: var(--personal); font-weight: 600; }
     color: var(--text-muted);
 }
 
-.mini-calendar-grid {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-}
-
-.mini-calendar-grid th {
-    text-align: center;
+.calendar-grid.compact .calendar-cell {
+    height: 76px;
     padding: 4px;
-    color: var(--text-muted);
     font-size: 0.72rem;
-    text-transform: uppercase;
 }
 
-.mini-cell {
-    text-align: center;
-    vertical-align: top;
-    padding: 6px 2px;
-    height: 46px;
-    border-radius: 8px;
-    font-size: 0.78rem;
+.calendar-grid.compact th {
+    font-size: 0.7rem;
+    padding: 4px;
 }
 
-.mini-cell.empty {
-    background: transparent;
+.calendar-grid.compact .calendar-day-number {
+    font-size: 0.74rem;
+    margin-bottom: 2px;
 }
 
-.mini-cell.today {
-    background: rgba(92, 114, 133, 0.09);
+.calendar-grid.compact .calendar-event {
+    font-size: 0.65rem;
+    padding: 1px 5px;
+    margin-bottom: 2px;
 }
 
-.mini-day-number {
+.calendar-event-more {
     display: block;
-    font-weight: 600;
+    font-size: 0.62rem;
     color: var(--text-muted);
+    padding-left: 2px;
 }
-
-.mini-cell.today .mini-day-number {
-    color: var(--accent);
-}
-
-.mini-dots {
-    display: flex;
-    justify-content: center;
-    gap: 3px;
-    margin-top: 3px;
-    min-height: 6px;
-}
-
-.mini-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    display: inline-block;
-}
-
-.mini-dot.category-academic { background: var(--academic); }
-.mini-dot.category-professional { background: var(--professional); }
-.mini-dot.category-financial { background: var(--financial); }
-.mini-dot.category-personal { background: var(--personal); }
 
 .todo-add-form {
     display: flex;

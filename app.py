@@ -66,15 +66,12 @@ def get_month_calendar(year, month):
             }
         )
 
-    day_categories = {day: sorted({e["category"] for e in events}) for day, events in events_by_day.items()}
-
     prev_month, prev_year = (12, year - 1) if month == 1 else (month - 1, year)
     next_month, next_year = (1, year + 1) if month == 12 else (month + 1, year)
 
     return {
         "weeks": weeks,
         "events_by_day": events_by_day,
-        "day_categories": day_categories,
         "month_name": cal_module.month_name[month],
         "year": year,
         "month": month,

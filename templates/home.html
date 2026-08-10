@@ -75,22 +75,25 @@
                 <span class="panel-subheading">{{ month_name }} {{ year }}</span>
                 <a class="panel-link" href="{{ url_for('calendar_view') }}">Open &rarr;</a>
             </div>
-            <table class="mini-calendar-grid">
+            <table class="calendar-grid compact">
                 <thead>
-                    <tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr>
+                    <tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr>
                 </thead>
                 <tbody>
                     {% for week in weeks %}
                     <tr>
                         {% for day in week %}
                         {% if day == 0 %}
-                        <td class="mini-cell empty"></td>
+                        <td class="calendar-cell empty"></td>
                         {% else %}
-                        <td class="mini-cell {% if year == today.year and month == today.month and day == today.day %}today{% endif %}">
-                            <span class="mini-day-number">{{ day }}</span>
-                            <span class="mini-dots">
-                                {% for cat in day_categories.get(day, []) %}<span class="mini-dot category-{{ cat }}"></span>{% endfor %}
-                            </span>
+                        <td class="calendar-cell {% if year == today.year and month == today.month and day == today.day %}today{% endif %}">
+                            <div class="calendar-day-number">{{ day }}</div>
+                            {% for event in events_by_day.get(day, [])[:2] %}
+                            <a class="calendar-event category-{{ event.category }}" href="{{ event.url }}">{{ event.title }}</a>
+                            {% endfor %}
+                            {% if events_by_day.get(day, [])|length > 2 %}
+                            <span class="calendar-event-more">+{{ events_by_day.get(day, [])|length - 2 }} more</span>
+                            {% endif %}
                         </td>
                         {% endif %}
                         {% endfor %}
