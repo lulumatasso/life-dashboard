@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{{ course.name }} — Life Dashboard{% endblock %}
+{% block content %}
+    <a class="back-link" href="{{ url_for('classes') }}">&larr; All classes</a>
+
+    <div class="page-header">
+        <div>
+            <h1>{{ course.name }}</h1>
+            <p class="subtitle">{{ course.professor }} &middot; {{ course.credit_hours }} credits &middot; {{ course.term }}</p>
+        </div>
+        <a class="btn" href="{{ url_for('new_assignment', course_id=course.id) }}">+ Add Assignment</a>
+    </div>
+
+    <div class="grade-summary">
+        <span class="grade-value">
+            {% if course.current_grade is not none %}{{ "%.1f"|format(course.current_grade) }}%{% else %}&mdash;{% endif %}
+        </span>
+        <span class="subtitle">current grade based on graded assignments</span>
+    </div>
+
+    {% if course.assignments %}
+    <table class="assignment-table">
+        <thead>
+            <tr>
+                <th>Assignment</th>
+                <th>Due date</th>
+                <th>Weight</th>
+                <th>Status</th>
+                <th>Grade</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in course.assignments %}
+            <tr>
+                <td>{{ a.name }}</td>
+                <td>{{ a.due_date.strftime("%b %d, %Y") if a.due_date else "—" }}</td>
+                <td>{{ (a.weight ~ "%") if a.weight is not none else "—" }}</td>
+                <td><span class="status-pill status-{{ a.status|lower|replace(' ', '-') }}">{{ a.status }}</span></td>
+                <td>{{ (a.grade ~ "%") if a.grade is not none else "—" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>No assignments yet. Add your first one to start tracking this class.</p>
+    </div>
+    {% endif %}
+{% endblock %}
