@@ -73,34 +73,56 @@
                 <span class="panel-icon">🗓️</span>
                 <h2>Calendar</h2>
                 <span class="panel-subheading">{{ month_name }} {{ year }}</span>
+                <a class="panel-link" href="{{ url_for('new_event') }}">+ Add Event</a>
                 <a class="panel-link" href="{{ url_for('calendar_view') }}">Open &rarr;</a>
             </div>
-            <table class="calendar-grid compact">
-                <thead>
-                    <tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr>
-                </thead>
-                <tbody>
-                    {% for week in weeks %}
-                    <tr>
-                        {% for day in week %}
-                        {% if day == 0 %}
-                        <td class="calendar-cell empty"></td>
-                        {% else %}
-                        <td class="calendar-cell {% if year == today.year and month == today.month and day == today.day %}today{% endif %}">
-                            <div class="calendar-day-number">{{ day }}</div>
-                            {% for event in events_by_day.get(day, [])[:2] %}
-                            <a class="calendar-event category-{{ event.category }}" href="{{ event.url }}">{{ event.title }}</a>
-                            {% endfor %}
-                            {% if events_by_day.get(day, [])|length > 2 %}
-                            <span class="calendar-event-more">+{{ events_by_day.get(day, [])|length - 2 }} more</span>
+            <div class="calendar-widget-layout">
+                <table class="calendar-grid compact">
+                    <thead>
+                        <tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for week in weeks %}
+                        <tr>
+                            {% for day in week %}
+                            {% if day == 0 %}
+                            <td class="calendar-cell empty"></td>
+                            {% else %}
+                            <td class="calendar-cell {% if year == today.year and month == today.month and day == today.day %}today{% endif %}">
+                                <div class="calendar-day-number">{{ day }}</div>
+                                {% for event in events_by_day.get(day, [])[:2] %}
+                                <a class="calendar-event category-{{ event.category }}" href="{{ event.url }}">{{ event.title }}</a>
+                                {% endfor %}
+                                {% if events_by_day.get(day, [])|length > 2 %}
+                                <span class="calendar-event-more">+{{ events_by_day.get(day, [])|length - 2 }} more</span>
+                                {% endif %}
+                            </td>
                             {% endif %}
-                        </td>
-                        {% endif %}
+                            {% endfor %}
+                        </tr>
                         {% endfor %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+
+                <div class="upcoming-events">
+                    <h3 class="upcoming-events-title">Upcoming This Month</h3>
+                    {% if upcoming_events %}
+                    <ul class="panel-list">
+                        {% for e in upcoming_events %}
+                        <li>
+                            <span class="event-row">
+                                <span class="event-dot category-{{ e.category }}"></span>
+                                <a href="{{ e.url }}">{{ e.title }}</a>
+                            </span>
+                            <span class="panel-list-meta">{{ e.date.strftime("%b %d") }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="subtitle">Nothing else on the calendar this month.</p>
+                    {% endif %}
+                </div>
+            </div>
         </div>
 
         <div class="panel panel-wide">

@@ -79,6 +79,20 @@ class Transaction(db.Model):
         return f"<Transaction {self.description} {self.amount}>"
 
 
+EVENT_CATEGORIES = ["personal", "academic", "professional", "financial"]
+
+
+class Event(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    category = db.Column(db.String(20), default="personal")
+    notes = db.Column(db.Text)
+
+    def __repr__(self):
+        return f"<Event {self.title}>"
+
+
 class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.String(200), nullable=False)

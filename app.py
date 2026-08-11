@@ -15,6 +15,8 @@ from models import (
     TRANSACTION_TYPES,
     TRANSACTION_CATEGORIES,
     Todo,
+    Event,
+    EVENT_CATEGORIES,
 )
 import syllabus
 
@@ -72,6 +74,16 @@ def get_month_calendar(year, month):
             }
         )
 
+    custom_events = Event.query.filter(Event.date >= start, Event.date <= end).all()
+    for e in custom_events:
+        events_by_day.setdefault(e.date.day, []).append(
+            {
+                "title": e.title,
+                "category": e.category,
+                "url": url_for("edit_event", event_id=e.id),
+            }
+        )
+
     prev_month, prev_year = (12, year - 1) if month == 1 else (month - 1, year)
     next_month, next_year = (1, year + 1) if month == 12 else (month + 1, year)
 
@@ -104,6 +116,14 @@ def home():
     ).count()
     todos = Todo.query.order_by(Todo.created_at).all()
     month_ctx = get_month_calendar(today.year, today.month)
+
+    upcoming_events = []
+    for day, day_events in month_ctx["events_by_day"].items():
+        if day >= today.day:
+            for e in day_events:
+                upcoming_events.append({**e, "date": date(today.year, today.month, day)})
+    upcoming_events.sort(key=lambda e: e["date"])
+
     return render_template(
         "home.html",
         name="AvaLucia",
@@ -113,6 +133,7 @@ def home():
         recent_applications=recent_applications,
         active_applications=active_applications,
         todos=todos,
+        upcoming_events=upcoming_events,
         **month_ctx,
     )
 
@@ -258,6 +279,45 @@ def calendar_view():
     month = request.args.get("month", type=int) or today.month
     month_ctx = get_month_calendar(year, month)
     return render_template("calendar.html", today=today, **month_ctx)
+
+
+@app.route("/calendar/events/new", methods=["GET", "POST"])
+def new_event():
+    if request.method == "POST":
+        event_date = datetime.strptime(request.form["date"], "%Y-%m-%d").date()
+        event = Event(
+            title=request.form["title"],
+            date=event_date,
+            category=request.form.get("category") or "personal",
+            notes=request.form.get("notes"),
+        )
+        db.session.add(event)
+        db.session.commit()
+        return redirect(url_for("calendar_view", year=event_date.year, month=event_date.month))
+    default_date = request.args.get("date", date.today().isoformat())
+    return render_template("new_event.html", categories=EVENT_CATEGORIES, default_date=default_date)
+
+
+@app.route("/calendar/events/<int:event_id>/edit", methods=["GET", "POST"])
+def edit_event(event_id):
+    event = Event.query.get_or_404(event_id)
+    if request.method == "POST":
+        event.title = request.form["title"]
+        event.date = datetime.strptime(request.form["date"], "%Y-%m-%d").date()
+        event.category = request.form.get("category") or event.category
+        event.notes = request.form.get("notes")
+        db.session.commit()
+        return redirect(url_for("calendar_view", year=event.date.year, month=event.date.month))
+    return render_template("edit_event.html", event=event, categories=EVENT_CATEGORIES)
+
+
+@app.route("/calendar/events/<int:event_id>/delete", methods=["POST"])
+def delete_event(event_id):
+    event = Event.query.get_or_404(event_id)
+    year, month = event.date.year, event.date.month
+    db.session.delete(event)
+    db.session.commit()
+    return redirect(url_for("calendar_view", year=year, month=month))
 
 
 @app.route("/applications")

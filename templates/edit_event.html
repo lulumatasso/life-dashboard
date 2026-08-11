@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ event.title }} — Life Dashboard{% endblock %}
+{% block content %}
+    <a class="back-link" href="{{ url_for('calendar_view', year=event.date.year, month=event.date.month) }}">&larr; Calendar</a>
+    <h1>Edit Event</h1>
+    <div class="card">
+        <form class="stack" method="POST">
+            <label>Title
+                <input type="text" name="title" value="{{ event.title }}" required>
+            </label>
+            <label>Date
+                <input type="date" name="date" value="{{ event.date.isoformat() }}" required>
+            </label>
+            <label>Category
+                <select name="category">
+                    {% for c in categories %}
+                    <option value="{{ c }}" {% if event.category == c %}selected{% endif %}>{{ c|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Notes (optional)
+                <textarea name="notes">{{ event.notes or '' }}</textarea>
+            </label>
+            <div class="button-group">
+                <button class="btn" type="submit">Save Changes</button>
+            </div>
+        </form>
+        <form method="POST" action="{{ url_for('delete_event', event_id=event.id) }}" class="delete-form">
+            <button type="submit" class="btn btn-danger">Delete Event</button>
+        </form>
+    </div>
+{% endblock %}

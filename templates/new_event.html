@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Add Event — Life Dashboard{% endblock %}
+{% block content %}
+    <a class="back-link" href="{{ url_for('calendar_view') }}">&larr; Calendar</a>
+    <h1>Add Event</h1>
+    <p class="subtitle">Add anything to your calendar — a personal reminder, appointment, or plan.</p>
+    <div class="card">
+        <form class="stack" method="POST">
+            <label>Title
+                <input type="text" name="title" required>
+            </label>
+            <label>Date
+                <input type="date" name="date" value="{{ default_date }}" required>
+            </label>
+            <label>Category
+                <select name="category">
+                    {% for c in categories %}
+                    <option value="{{ c }}">{{ c|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Notes (optional)
+                <textarea name="notes"></textarea>
+            </label>
+            <button class="btn" type="submit">Add Event</button>
+        </form>
+    </div>
+{% endblock %}

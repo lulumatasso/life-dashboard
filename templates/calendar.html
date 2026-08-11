@@ -9,6 +9,7 @@
         <div class="calendar-nav">
             <a class="btn btn-secondary" href="{{ url_for('calendar_view', year=prev_year, month=prev_month) }}">&larr; Prev</a>
             <a class="btn btn-secondary" href="{{ url_for('calendar_view', year=next_year, month=next_month) }}">Next &rarr;</a>
+            <a class="btn" href="{{ url_for('new_event') }}">+ Add Event</a>
         </div>
     </div>
 
