@@ -141,7 +141,9 @@ def new_class():
 @app.route("/classes/<int:course_id>")
 def course_detail(course_id):
     course = Course.query.get_or_404(course_id)
-    return render_template("course_detail.html", course=course)
+    today = date.today()
+    sorted_assignments = sorted(course.assignments, key=lambda a: (a.due_date is None, a.due_date or date.max))
+    return render_template("course_detail.html", course=course, assignments=sorted_assignments, today=today)
 
 
 @app.route("/classes/<int:course_id>/assignments/new", methods=["GET", "POST"])
@@ -163,6 +165,34 @@ def new_assignment(course_id):
         db.session.commit()
         return redirect(url_for("course_detail", course_id=course.id))
     return render_template("new_assignment.html", course=course, status_choices=STATUS_CHOICES)
+
+
+@app.route("/classes/<int:course_id>/assignments/<int:assignment_id>/edit", methods=["GET", "POST"])
+def edit_assignment(course_id, assignment_id):
+    course = Course.query.get_or_404(course_id)
+    assignment = Assignment.query.filter_by(id=assignment_id, course_id=course.id).first_or_404()
+    if request.method == "POST":
+        due_date_raw = request.form.get("due_date")
+        weight_raw = request.form.get("weight")
+        grade_raw = request.form.get("grade")
+        assignment.name = request.form["name"]
+        assignment.due_date = datetime.strptime(due_date_raw, "%Y-%m-%d").date() if due_date_raw else None
+        assignment.weight = float(weight_raw) if weight_raw else None
+        assignment.status = request.form.get("status") or assignment.status
+        assignment.grade = float(grade_raw) if grade_raw else None
+        db.session.commit()
+        return redirect(url_for("course_detail", course_id=course.id))
+    return render_template(
+        "edit_assignment.html", course=course, assignment=assignment, status_choices=STATUS_CHOICES
+    )
+
+
+@app.route("/classes/<int:course_id>/assignments/<int:assignment_id>/delete", methods=["POST"])
+def delete_assignment(course_id, assignment_id):
+    assignment = Assignment.query.filter_by(id=assignment_id, course_id=course_id).first_or_404()
+    db.session.delete(assignment)
+    db.session.commit()
+    return redirect(url_for("course_detail", course_id=course_id))
 
 
 @app.route("/classes/<int:course_id>/syllabus/upload", methods=["GET", "POST"])

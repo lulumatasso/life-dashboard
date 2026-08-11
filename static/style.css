@@ -210,6 +210,37 @@ h1 {
     gap: 10px;
 }
 
+.delete-form {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.btn-danger {
+    background: transparent;
+    color: var(--personal);
+    border: 1px solid var(--personal);
+}
+
+.btn-danger:hover {
+    background: rgba(185, 123, 126, 0.1);
+}
+
+.days-left {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.days-left.overdue {
+    color: var(--personal);
+    font-weight: 600;
+}
+
+.days-left.soon {
+    color: var(--financial);
+    font-weight: 600;
+}
+
 .error-banner {
     background: rgba(185, 123, 126, 0.14);
     color: var(--personal);

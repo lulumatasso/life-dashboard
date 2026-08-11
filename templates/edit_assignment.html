@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ assignment.name }} — Life Dashboard{% endblock %}
+{% block content %}
+    <a class="back-link" href="{{ url_for('course_detail', course_id=course.id) }}">&larr; {{ course.name }}</a>
+    <h1>Edit Assignment</h1>
+    <p class="subtitle">for {{ course.name }}</p>
+    <div class="card">
+        <form class="stack" method="POST">
+            <label>Assignment name
+                <input type="text" name="name" value="{{ assignment.name }}" required>
+            </label>
+            <label>Due date
+                <input type="date" name="due_date" value="{{ assignment.due_date.isoformat() if assignment.due_date else '' }}">
+            </label>
+            <label>Weight (% of final grade)
+                <input type="number" name="weight" min="0" max="100" step="0.1" value="{{ assignment.weight if assignment.weight is not none else '' }}">
+            </label>
+            <label>Status
+                <select name="status">
+                    {% for choice in status_choices %}
+                    <option value="{{ choice }}" {% if assignment.status == choice %}selected{% endif %}>{{ choice }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Grade received (%, if graded)
+                <input type="number" name="grade" min="0" max="100" step="0.1" value="{{ assignment.grade if assignment.grade is not none else '' }}">
+            </label>
+            <div class="button-group">
+                <button class="btn" type="submit">Save Changes</button>
+            </div>
+        </form>
+        <form method="POST" action="{{ url_for('delete_assignment', course_id=course.id, assignment_id=assignment.id) }}" class="delete-form">
+            <button type="submit" class="btn btn-danger">Delete Assignment</button>
+        </form>
+    </div>
+{% endblock %}
