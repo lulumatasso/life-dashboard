@@ -16,7 +16,12 @@
     --radius: 16px;
     --radius-sm: 10px;
     --shadow: 0 1px 2px rgba(60, 45, 20, 0.05), 0 6px 20px rgba(60, 45, 20, 0.06);
-    --sidebar-width: 220px;
+    --sidebar-width: 148px;
+
+    /* Sidebar icon theme — change these two to recolor every nav icon at once */
+    --icon-color: #a8674f;
+    --icon-bg: #f1ddd0;
+    --icon-bg-active: #e8c4b0;
 }
 
 * {
@@ -54,41 +59,59 @@ h1, .brand, .grade-value {
 
 .sidebar .brand {
     display: block;
-    font-size: 1.3rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text);
     text-decoration: none;
-    padding: 4px 12px 20px;
+    text-align: center;
+    padding: 4px 8px 26px;
 }
 
 .sidebar nav {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    align-items: center;
+    gap: 20px;
 }
 
 .sidebar a.nav-link {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+    width: 100%;
     color: var(--text);
     text-decoration: none;
-    padding: 9px 12px;
+    padding: 4px;
     border-radius: var(--radius-sm);
-    font-size: 0.92rem;
+    font-size: 0.76rem;
     font-weight: 500;
+    text-align: center;
 }
 
-.sidebar a.nav-link .icon {
-    font-size: 1rem;
+.nav-icon-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    background: var(--icon-bg);
+    color: var(--icon-color);
+    transition: background 0.15s ease, transform 0.1s ease;
 }
 
-.sidebar a.nav-link:hover {
-    background: var(--surface-sunken);
+.nav-icon-badge svg {
+    width: 24px;
+    height: 24px;
 }
 
-.sidebar a.nav-link.active {
-    background: var(--surface);
+.sidebar a.nav-link:hover .nav-icon-badge {
+    transform: translateY(-2px);
+}
+
+.sidebar a.nav-link.active .nav-icon-badge {
+    background: var(--icon-bg-active);
     box-shadow: var(--shadow);
 }
 
