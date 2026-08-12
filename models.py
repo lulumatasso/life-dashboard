@@ -9,6 +9,9 @@ class Course(db.Model):
     professor = db.Column(db.String(100))
     credit_hours = db.Column(db.Integer)
     term = db.Column(db.String(50))
+    syllabus_filename = db.Column(db.String(255))
+    syllabus_original_name = db.Column(db.String(255))
+    syllabus_url = db.Column(db.String(500))
 
     assignments = db.relationship(
         "Assignment", backref="course", lazy=True, cascade="all, delete-orphan"

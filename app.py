@@ -1,9 +1,12 @@
 import calendar as cal_module
+import io
 import os
 from datetime import date, datetime, timedelta
+from uuid import uuid4
 
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory
+from werkzeug.utils import secure_filename
 from models import (
     db,
     Course,
@@ -27,10 +30,34 @@ load_dotenv()
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///dashboard.db"
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-only-secret-for-local-use")
+app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, "uploads", "syllabi")
+os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 db.init_app(app)
+
+class InMemoryUpload:
+    """Mimics just enough of Flask's FileStorage so syllabus.extract_text can read bytes we already saved to disk."""
+
+    def __init__(self, filename, data):
+        self.filename = filename
+        self.stream = io.BytesIO(data)
+
 
 with app.app_context():
     db.create_all()
+
+    # One-time upgrade: add new Course columns if this database predates them
+    inspector = db.inspect(db.engine)
+    existing_columns = {col["name"] for col in inspector.get_columns("course")}
+    new_columns = {
+        "syllabus_filename": "VARCHAR(255)",
+        "syllabus_original_name": "VARCHAR(255)",
+        "syllabus_url": "VARCHAR(500)",
+    }
+    with db.engine.connect() as conn:
+        for column_name, column_type in new_columns.items():
+            if column_name not in existing_columns:
+                conn.execute(db.text(f"ALTER TABLE course ADD COLUMN {column_name} {column_type}"))
+        conn.commit()
 
 
 def get_month_calendar(year, month):
@@ -223,7 +250,39 @@ def course_detail(course_id):
     course = Course.query.get_or_404(course_id)
     today = date.today()
     sorted_assignments = sorted(course.assignments, key=lambda a: (a.due_date is None, a.due_date or date.max))
-    return render_template("course_detail.html", course=course, assignments=sorted_assignments, today=today)
+
+    year = request.args.get("year", type=int) or today.year
+    month = request.args.get("month", type=int) or today.month
+    weeks = cal_module.Calendar(firstweekday=6).monthdayscalendar(year, month)
+    days_in_month = cal_module.monthrange(year, month)[1]
+    start = date(year, month, 1)
+    end = date(year, month, days_in_month)
+
+    events_by_day = {}
+    for a in course.assignments:
+        if a.due_date and start <= a.due_date <= end:
+            events_by_day.setdefault(a.due_date.day, []).append(
+                {"title": a.name, "url": url_for("edit_assignment", course_id=course.id, assignment_id=a.id)}
+            )
+
+    prev_month, prev_year = (12, year - 1) if month == 1 else (month - 1, year)
+    next_month, next_year = (1, year + 1) if month == 12 else (month + 1, year)
+
+    return render_template(
+        "course_detail.html",
+        course=course,
+        assignments=sorted_assignments,
+        today=today,
+        weeks=weeks,
+        events_by_day=events_by_day,
+        month_name=cal_module.month_name[month],
+        year=year,
+        month=month,
+        prev_year=prev_year,
+        prev_month=prev_month,
+        next_year=next_year,
+        next_month=next_month,
+    )
 
 
 @app.route("/classes/<int:course_id>/assignments/new", methods=["GET", "POST"])
@@ -282,8 +341,19 @@ def upload_syllabus(course_id):
         file = request.files.get("syllabus")
         if not file or not file.filename:
             return render_template("upload_syllabus.html", course=course, error="Please choose a file.")
+
+        file_bytes = file.read()
+        stored_name = f"{course.id}_{uuid4().hex}_{secure_filename(file.filename)}"
+        with open(os.path.join(app.config["UPLOAD_FOLDER"], stored_name), "wb") as f:
+            f.write(file_bytes)
+        course.syllabus_filename = stored_name
+        course.syllabus_original_name = file.filename
+        course.syllabus_url = None
+        db.session.commit()
+
         try:
-            text = syllabus.extract_text(file)
+            file_copy = InMemoryUpload(file.filename, file_bytes)
+            text = syllabus.extract_text(file_copy)
             if not text.strip():
                 raise ValueError("Couldn't find any text in that file — is it a scanned image?")
             items = syllabus.extract_assignments(text)
@@ -294,6 +364,42 @@ def upload_syllabus(course_id):
         session["syllabus_items"] = items
         return redirect(url_for("review_syllabus", course_id=course.id))
     return render_template("upload_syllabus.html", course=course, error=None)
+
+
+@app.route("/classes/<int:course_id>/syllabus/file")
+def download_syllabus(course_id):
+    course = Course.query.get_or_404(course_id)
+    if not course.syllabus_filename:
+        return redirect(url_for("course_detail", course_id=course.id))
+    return send_from_directory(
+        app.config["UPLOAD_FOLDER"], course.syllabus_filename, download_name=course.syllabus_original_name
+    )
+
+
+@app.route("/classes/<int:course_id>/syllabus/link", methods=["GET", "POST"])
+def add_syllabus_link(course_id):
+    course = Course.query.get_or_404(course_id)
+    if request.method == "POST":
+        course.syllabus_url = request.form.get("url", "").strip() or None
+        course.syllabus_filename = None
+        course.syllabus_original_name = None
+        db.session.commit()
+        return redirect(url_for("course_detail", course_id=course.id))
+    return render_template("add_syllabus_link.html", course=course)
+
+
+@app.route("/classes/<int:course_id>/syllabus/remove", methods=["POST"])
+def remove_syllabus(course_id):
+    course = Course.query.get_or_404(course_id)
+    if course.syllabus_filename:
+        old_path = os.path.join(app.config["UPLOAD_FOLDER"], course.syllabus_filename)
+        if os.path.exists(old_path):
+            os.remove(old_path)
+    course.syllabus_filename = None
+    course.syllabus_original_name = None
+    course.syllabus_url = None
+    db.session.commit()
+    return redirect(url_for("course_detail", course_id=course.id))
 
 
 @app.route("/classes/<int:course_id>/syllabus/review", methods=["GET", "POST"])

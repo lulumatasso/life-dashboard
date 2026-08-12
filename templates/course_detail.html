@@ -15,11 +15,66 @@
         </div>
     </div>
 
+    <div class="syllabus-bar">
+        {% if course.syllabus_filename %}
+        <span class="syllabus-status">
+            📄 <a href="{{ url_for('download_syllabus', course_id=course.id) }}" target="_blank" rel="noopener">{{ course.syllabus_original_name }}</a>
+        </span>
+        <form method="POST" action="{{ url_for('remove_syllabus', course_id=course.id) }}">
+            <button type="submit" class="link-btn">Remove</button>
+        </form>
+        {% elif course.syllabus_url %}
+        <span class="syllabus-status">
+            🔗 <a href="{{ course.syllabus_url }}" target="_blank" rel="noopener">Syllabus Link</a>
+        </span>
+        <form method="POST" action="{{ url_for('remove_syllabus', course_id=course.id) }}">
+            <button type="submit" class="link-btn">Remove</button>
+        </form>
+        {% else %}
+        <span class="syllabus-status subtitle">No syllabus attached.</span>
+        <a class="link-btn" href="{{ url_for('upload_syllabus', course_id=course.id) }}">Upload PDF/DOCX</a>
+        <a class="link-btn" href="{{ url_for('add_syllabus_link', course_id=course.id) }}">Add Link Instead</a>
+        {% endif %}
+    </div>
+
     <div class="grade-summary">
         <span class="grade-value">
             {% if course.current_grade is not none %}{{ "%.1f"|format(course.current_grade) }}%{% else %}&mdash;{% endif %}
         </span>
         <span class="subtitle">current grade based on graded assignments</span>
+    </div>
+
+    <div class="card class-calendar-card">
+        <div class="page-header class-calendar-header">
+            <h2 class="section-title">{{ month_name }} {{ year }}</h2>
+            <div class="calendar-nav">
+                <a class="btn btn-secondary btn-small" href="{{ url_for('course_detail', course_id=course.id, year=prev_year, month=prev_month) }}">&larr;</a>
+                <a class="btn btn-secondary btn-small" href="{{ url_for('course_detail', course_id=course.id, year=next_year, month=next_month) }}">&rarr;</a>
+            </div>
+        </div>
+        <table class="calendar-grid compact">
+            <thead>
+                <tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr>
+            </thead>
+            <tbody>
+                {% for week in weeks %}
+                <tr>
+                    {% for day in week %}
+                    {% if day == 0 %}
+                    <td class="calendar-cell empty"></td>
+                    {% else %}
+                    <td class="calendar-cell {% if year == today.year and month == today.month and day == today.day %}today{% endif %}">
+                        <div class="calendar-day-number">{{ day }}</div>
+                        {% for event in events_by_day.get(day, []) %}
+                        <a class="calendar-event category-academic" href="{{ event.url }}">{{ event.title }}</a>
+                        {% endfor %}
+                    </td>
+                    {% endif %}
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 
     {% if assignments %}
