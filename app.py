@@ -13,6 +13,7 @@ from models import (
     GRADING_MODES,
     Assignment,
     AssignmentCategory,
+    DEFAULT_CATEGORY_COLOR,
     STATUS_CHOICES,
     Application,
     APPLICATION_STATUS_CHOICES,
@@ -44,30 +45,57 @@ class InMemoryUpload:
         self.stream = io.BytesIO(data)
 
 
+def ensure_columns(inspector, conn, table_name, columns):
+    """One-time upgrade helper: add any columns a table is missing (SQLite has no ALTER-safe migrations built in)."""
+    existing = {col["name"] for col in inspector.get_columns(table_name)}
+    for column_name, column_type in columns.items():
+        if column_name not in existing:
+            conn.execute(db.text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}"))
+
+
 with app.app_context():
     db.create_all()
 
-    # One-time upgrade: add new Course columns if this database predates them
     inspector = db.inspect(db.engine)
-    existing_columns = {col["name"] for col in inspector.get_columns("course")}
-    new_columns = {
-        "syllabus_filename": "VARCHAR(255)",
-        "syllabus_original_name": "VARCHAR(255)",
-        "syllabus_url": "VARCHAR(500)",
-        "grading_mode": "VARCHAR(12)",
-    }
     with db.engine.connect() as conn:
-        for column_name, column_type in new_columns.items():
-            if column_name not in existing_columns:
-                conn.execute(db.text(f"ALTER TABLE course ADD COLUMN {column_name} {column_type}"))
+        ensure_columns(
+            inspector,
+            conn,
+            "course",
+            {
+                "syllabus_filename": "VARCHAR(255)",
+                "syllabus_original_name": "VARCHAR(255)",
+                "syllabus_url": "VARCHAR(500)",
+                "grading_mode": "VARCHAR(12)",
+            },
+        )
+        ensure_columns(inspector, conn, "assignment", {"category_id": "INTEGER"})
+        ensure_columns(inspector, conn, "assignment_category", {"color": "VARCHAR(7)"})
+        ensure_columns(inspector, conn, "event", {"course_id": "INTEGER"})
+        conn.execute(
+            db.text("UPDATE assignment_category SET color = :color WHERE color IS NULL"),
+            {"color": DEFAULT_CATEGORY_COLOR},
+        )
         conn.commit()
 
-    # One-time upgrade: add category_id to Assignment if this database predates it
-    existing_assignment_columns = {col["name"] for col in inspector.get_columns("assignment")}
-    with db.engine.connect() as conn:
-        if "category_id" not in existing_assignment_columns:
-            conn.execute(db.text("ALTER TABLE assignment ADD COLUMN category_id INTEGER"))
-        conn.commit()
+
+EVENT_CATEGORY_COLORS = {
+    "academic": DEFAULT_CATEGORY_COLOR,
+    "professional": "#7a9171",
+    "financial": "#c08a44",
+    "personal": "#b97b7e",
+}
+
+CATEGORY_COLOR_PALETTE = [
+    "#5c7285",  # dusty blue-gray
+    "#7a9171",  # sage
+    "#c08a44",  # ochre
+    "#b97b7e",  # dusty rose
+    "#8a6fa8",  # soft plum
+    "#4d8a8a",  # soft teal
+    "#b5654a",  # terracotta
+    "#6b7c4f",  # olive
+]
 
 
 def get_month_calendar(year, month):
@@ -81,10 +109,12 @@ def get_month_calendar(year, month):
 
     assignments = Assignment.query.filter(Assignment.due_date >= start, Assignment.due_date <= end).all()
     for a in assignments:
+        color = (a.category.color if a.category else None) or EVENT_CATEGORY_COLORS["academic"]
         events_by_day.setdefault(a.due_date.day, []).append(
             {
                 "title": f"{a.name} — {a.course.name}",
                 "category": "academic",
+                "color": color,
                 "url": url_for("course_detail", course_id=a.course_id),
             }
         )
@@ -97,6 +127,7 @@ def get_month_calendar(year, month):
             {
                 "title": f"Follow up: {a.company}",
                 "category": "professional",
+                "color": EVENT_CATEGORY_COLORS["professional"],
                 "url": url_for("application_detail", application_id=a.id),
             }
         )
@@ -109,6 +140,7 @@ def get_month_calendar(year, month):
             {
                 "title": t.description,
                 "category": "financial",
+                "color": EVENT_CATEGORY_COLORS["financial"],
                 "url": url_for("budget", year=year, month=month),
             }
         )
@@ -119,6 +151,7 @@ def get_month_calendar(year, month):
             {
                 "title": e.title,
                 "category": e.category,
+                "color": EVENT_CATEGORY_COLORS.get(e.category, DEFAULT_CATEGORY_COLOR),
                 "url": url_for("edit_event", event_id=e.id),
             }
         )
@@ -273,8 +306,22 @@ def course_detail(course_id):
     events_by_day = {}
     for a in course.assignments:
         if a.due_date and start <= a.due_date <= end:
+            color = (a.category.color if a.category else None) or EVENT_CATEGORY_COLORS["academic"]
             events_by_day.setdefault(a.due_date.day, []).append(
-                {"title": a.name, "url": url_for("edit_assignment", course_id=course.id, assignment_id=a.id)}
+                {
+                    "title": a.name,
+                    "color": color,
+                    "url": url_for("edit_assignment", course_id=course.id, assignment_id=a.id),
+                }
+            )
+    for e in course.events:
+        if start <= e.date <= end:
+            events_by_day.setdefault(e.date.day, []).append(
+                {
+                    "title": e.title,
+                    "color": EVENT_CATEGORY_COLORS["personal"],
+                    "url": url_for("edit_event", event_id=e.id),
+                }
             )
 
     prev_month, prev_year = (12, year - 1) if month == 1 else (month - 1, year)
@@ -294,6 +341,7 @@ def course_detail(course_id):
         prev_month=prev_month,
         next_year=next_year,
         next_month=next_month,
+        palette=CATEGORY_COLOR_PALETTE,
     )
 
 
@@ -355,8 +403,9 @@ def new_category(course_id):
     course = Course.query.get_or_404(course_id)
     name = request.form.get("name", "").strip()
     value_raw = request.form.get("value")
+    color = request.form.get("color") or DEFAULT_CATEGORY_COLOR
     if name and value_raw:
-        db.session.add(AssignmentCategory(course_id=course.id, name=name, value=float(value_raw)))
+        db.session.add(AssignmentCategory(course_id=course.id, name=name, value=float(value_raw), color=color))
         db.session.commit()
     return redirect(url_for("course_detail", course_id=course.id))
 
@@ -369,6 +418,32 @@ def delete_category(course_id, category_id):
     db.session.delete(category)
     db.session.commit()
     return redirect(url_for("course_detail", course_id=course_id))
+
+
+@app.route("/classes/<int:course_id>/categories/<int:category_id>/edit", methods=["POST"])
+def edit_category(course_id, category_id):
+    category = AssignmentCategory.query.filter_by(id=category_id, course_id=course_id).first_or_404()
+    category.name = request.form.get("name", category.name).strip() or category.name
+    value_raw = request.form.get("value")
+    if value_raw:
+        category.value = float(value_raw)
+    category.color = request.form.get("color") or category.color
+    db.session.commit()
+    return redirect(url_for("course_detail", course_id=course_id))
+
+
+@app.route("/classes/<int:course_id>/dates/new", methods=["GET", "POST"])
+def new_course_date(course_id):
+    course = Course.query.get_or_404(course_id)
+    if request.method == "POST":
+        event_date = datetime.strptime(request.form["date"], "%Y-%m-%d").date()
+        db.session.add(
+            Event(course_id=course.id, title=request.form["title"], date=event_date, category="academic")
+        )
+        db.session.commit()
+        return redirect(url_for("course_detail", course_id=course.id, year=event_date.year, month=event_date.month))
+    default_date = request.args.get("date", date.today().isoformat())
+    return render_template("new_course_date.html", course=course, default_date=default_date)
 
 
 @app.route("/classes/<int:course_id>/syllabus/upload", methods=["GET", "POST"])

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Add Date — Life Dashboard{% endblock %}
+{% block content %}
+    <a class="back-link" href="{{ url_for('course_detail', course_id=course.id) }}">&larr; {{ course.name }}</a>
+    <h1>Add a Date</h1>
+    <p class="subtitle">Add anything to {{ course.name }}'s calendar — a guest lecture, office hours, field trip, whatever isn't a graded assignment.</p>
+    <div class="card">
+        <form class="stack" method="POST">
+            <label>Title
+                <input type="text" name="title" required>
+            </label>
+            <label>Date
+                <input type="date" name="date" value="{{ default_date }}" required>
+            </label>
+            <button class="btn" type="submit">Add Date</button>
+        </form>
+    </div>
+{% endblock %}

@@ -113,7 +113,7 @@
                             <td class="calendar-cell {% if year == today.year and month == today.month and day == today.day %}today{% endif %}">
                                 <div class="calendar-day-number">{{ day }}</div>
                                 {% for event in events_by_day.get(day, [])[:2] %}
-                                <a class="calendar-event category-{{ event.category }}" href="{{ event.url }}">{{ event.title }}</a>
+                                <a class="calendar-event" href="{{ event.url }}" style="background: {{ event.color }};">{{ event.title }}</a>
                                 {% endfor %}
                                 {% if events_by_day.get(day, [])|length > 2 %}
                                 <span class="calendar-event-more">+{{ events_by_day.get(day, [])|length - 2 }} more</span>
@@ -133,7 +133,7 @@
                         {% for e in upcoming_events %}
                         <li>
                             <span class="event-row">
-                                <span class="event-dot category-{{ e.category }}"></span>
+                                <span class="event-dot" style="background: {{ e.color }};"></span>
                                 <a href="{{ e.url }}">{{ e.title }}</a>
                             </span>
                             <span class="panel-list-meta">{{ e.date.strftime("%b %d") }}</span>

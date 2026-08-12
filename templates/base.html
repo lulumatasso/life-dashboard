@@ -73,5 +73,16 @@
             {% block content %}{% endblock %}
         </main>
     </div>
+    <script>
+        function pickSwatch(btn, color, autosubmit) {
+            const group = btn.closest('.color-picker');
+            group.querySelector('.color-value').value = color;
+            group.querySelectorAll('.swatch').forEach(function (s) { s.classList.remove('selected'); });
+            btn.classList.add('selected');
+            if (autosubmit) {
+                btn.closest('form').submit();
+            }
+        }
+    </script>
 </body>
 </html>

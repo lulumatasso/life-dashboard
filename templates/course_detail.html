@@ -55,6 +55,7 @@
             <div class="calendar-nav">
                 <a class="btn btn-secondary btn-small" href="{{ url_for('course_detail', course_id=course.id, year=prev_year, month=prev_month) }}">&larr;</a>
                 <a class="btn btn-secondary btn-small" href="{{ url_for('course_detail', course_id=course.id, year=next_year, month=next_month) }}">&rarr;</a>
+                <a class="btn btn-secondary btn-small" href="{{ url_for('new_course_date', course_id=course.id) }}">+ Add Date</a>
             </div>
         </div>
         <table class="calendar-grid compact">
@@ -71,7 +72,7 @@
                     <td class="calendar-cell {% if year == today.year and month == today.month and day == today.day %}today{% endif %}">
                         <div class="calendar-day-number">{{ day }}</div>
                         {% for event in events_by_day.get(day, []) %}
-                        <a class="calendar-event category-academic" href="{{ event.url }}">{{ event.title }}</a>
+                        <a class="calendar-event" href="{{ event.url }}" style="background: {{ event.color }};">{{ event.title }}</a>
                         {% endfor %}
                     </td>
                     {% endif %}
@@ -88,12 +89,28 @@
         <form class="category-add-form" method="POST" action="{{ url_for('new_category', course_id=course.id) }}">
             <input type="text" name="name" placeholder="e.g. Homework" required>
             <input type="number" name="value" min="0" step="0.1" placeholder="{% if course.grading_mode == 'points' %}Total points{% else %}Total %{% endif %}" required>
+            <div class="color-picker">
+                <input type="hidden" name="color" value="{{ palette[0] }}" class="color-value">
+                {% for c in palette %}
+                <button type="button" class="swatch {% if loop.first %}selected{% endif %}" style="background: {{ c }};" onclick="pickSwatch(this, '{{ c }}')" aria-label="Pick color {{ c }}"></button>
+                {% endfor %}
+            </div>
             <button class="btn btn-secondary btn-small" type="submit">Add Category</button>
         </form>
         {% if course.categories %}
         <div class="category-list">
             {% for cat in course.categories %}
             <div class="category-row">
+                <form method="POST" action="{{ url_for('edit_category', course_id=course.id, category_id=cat.id) }}" class="category-color-form">
+                    <input type="hidden" name="name" value="{{ cat.name }}">
+                    <input type="hidden" name="value" value="{{ cat.value }}">
+                    <div class="color-picker">
+                        <input type="hidden" name="color" value="{{ cat.color }}" class="color-value">
+                        {% for c in palette %}
+                        <button type="button" class="swatch {% if cat.color == c %}selected{% endif %}" style="background: {{ c }};" onclick="pickSwatch(this, '{{ c }}', true)" aria-label="Set {{ cat.name }} color to {{ c }}"></button>
+                        {% endfor %}
+                    </div>
+                </form>
                 <span class="category-name">{{ cat.name }}</span>
                 <span class="category-meta">
                     {{ cat.value }}{{ " pts" if course.grading_mode == "points" else "%" }} total &middot;
@@ -130,7 +147,7 @@
             <tr class="clickable" onclick="window.location='{{ url_for('edit_assignment', course_id=course.id, assignment_id=a.id) }}'">
                 <td>
                     {{ a.name }}
-                    {% if a.category %}<span class="badge category-tag">{{ a.category.name }}</span>{% endif %}
+                    {% if a.category %}<span class="badge category-tag" style="background: {{ a.category.color }}26; color: {{ a.category.color }};">{{ a.category.name }}</span>{% endif %}
                 </td>
                 <td>{{ a.due_date.strftime("%b %d, %Y") if a.due_date else "—" }}</td>
                 <td>

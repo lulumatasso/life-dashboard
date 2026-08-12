@@ -23,6 +23,9 @@ class Course(db.Model):
     categories = db.relationship(
         "AssignmentCategory", backref="course", lazy=True, cascade="all, delete-orphan"
     )
+    events = db.relationship(
+        "Event", backref="course", lazy=True, cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<Course {self.name}>"
@@ -53,11 +56,15 @@ class Course(db.Model):
         return {"earned": sum(a.grade or 0 for a in graded), "possible": possible}
 
 
+DEFAULT_CATEGORY_COLOR = "#5c7285"
+
+
 class AssignmentCategory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     course_id = db.Column(db.Integer, db.ForeignKey("course.id"), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     value = db.Column(db.Float, nullable=False)
+    color = db.Column(db.String(7), default=DEFAULT_CATEGORY_COLOR)
 
     assignments = db.relationship("Assignment", backref="category", lazy=True)
 
@@ -136,6 +143,7 @@ EVENT_CATEGORIES = ["personal", "academic", "professional", "financial"]
 
 class Event(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey("course.id"))
     title = db.Column(db.String(150), nullable=False)
     date = db.Column(db.Date, nullable=False)
     category = db.Column(db.String(20), default="personal")
