@@ -159,6 +159,27 @@ def new_class():
     return render_template("new_class.html")
 
 
+@app.route("/classes/<int:course_id>/edit", methods=["GET", "POST"])
+def edit_class(course_id):
+    course = Course.query.get_or_404(course_id)
+    if request.method == "POST":
+        course.name = request.form["name"]
+        course.professor = request.form.get("professor")
+        course.credit_hours = request.form.get("credit_hours") or None
+        course.term = request.form.get("term")
+        db.session.commit()
+        return redirect(url_for("course_detail", course_id=course.id))
+    return render_template("edit_class.html", course=course)
+
+
+@app.route("/classes/<int:course_id>/delete", methods=["POST"])
+def delete_class(course_id):
+    course = Course.query.get_or_404(course_id)
+    db.session.delete(course)
+    db.session.commit()
+    return redirect(url_for("classes"))
+
+
 @app.route("/classes/<int:course_id>")
 def course_detail(course_id):
     course = Course.query.get_or_404(course_id)

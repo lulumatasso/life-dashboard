@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ course.name }} — Life Dashboard{% endblock %}
+{% block content %}
+    <a class="back-link" href="{{ url_for('course_detail', course_id=course.id) }}">&larr; {{ course.name }}</a>
+    <h1>Edit Class</h1>
+    <div class="card">
+        <form class="stack" method="POST">
+            <label>Course name
+                <input type="text" name="name" value="{{ course.name }}" required>
+            </label>
+            <label>Professor
+                <input type="text" name="professor" value="{{ course.professor or '' }}">
+            </label>
+            <label>Credit hours
+                <input type="number" name="credit_hours" min="0" max="10" value="{{ course.credit_hours if course.credit_hours is not none else '' }}">
+            </label>
+            <label>Term
+                <input type="text" name="term" value="{{ course.term or '' }}" placeholder="e.g. Fall 2026">
+            </label>
+            <div class="button-group">
+                <button class="btn" type="submit">Save Changes</button>
+            </div>
+        </form>
+        <form method="POST" action="{{ url_for('delete_class', course_id=course.id) }}" class="delete-form" onsubmit="return confirm('Delete {{ course.name }} and all its assignments? This cannot be undone.');">
+            <button type="submit" class="btn btn-danger">Delete Class</button>
+        </form>
+    </div>
+{% endblock %}
