@@ -357,10 +357,7 @@ def upload_syllabus(course_id):
 
         try:
             file_copy = InMemoryUpload(file.filename, file_bytes)
-            text = syllabus.extract_text(file_copy)
-            if not text.strip():
-                raise ValueError("Couldn't find any text in that file — is it a scanned image?")
-            items = syllabus.extract_assignments(text)
+            items = syllabus.extract_assignments_from_upload(file_copy, file_bytes)
         except Exception as exc:
             return render_template("upload_syllabus.html", course=course, error=str(exc))
 
