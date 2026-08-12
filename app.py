@@ -279,7 +279,9 @@ def edit_class(course_id):
         course.grading_mode = request.form.get("grading_mode") or "percentage"
         db.session.commit()
         return redirect(url_for("course_detail", course_id=course.id))
-    return render_template("edit_class.html", course=course, grading_modes=GRADING_MODES)
+    return render_template(
+        "edit_class.html", course=course, grading_modes=GRADING_MODES, palette=CATEGORY_COLOR_PALETTE
+    )
 
 
 @app.route("/classes/<int:course_id>/delete", methods=["POST"])
@@ -407,7 +409,7 @@ def new_category(course_id):
     if name and value_raw:
         db.session.add(AssignmentCategory(course_id=course.id, name=name, value=float(value_raw), color=color))
         db.session.commit()
-    return redirect(url_for("course_detail", course_id=course.id))
+    return redirect(url_for("edit_class", course_id=course.id))
 
 
 @app.route("/classes/<int:course_id>/categories/<int:category_id>/delete", methods=["POST"])
@@ -417,7 +419,7 @@ def delete_category(course_id, category_id):
         assignment.category_id = None
     db.session.delete(category)
     db.session.commit()
-    return redirect(url_for("course_detail", course_id=course_id))
+    return redirect(url_for("edit_class", course_id=course_id))
 
 
 @app.route("/classes/<int:course_id>/categories/<int:category_id>/edit", methods=["POST"])
@@ -429,7 +431,7 @@ def edit_category(course_id, category_id):
         category.value = float(value_raw)
     category.color = request.form.get("color") or category.color
     db.session.commit()
-    return redirect(url_for("course_detail", course_id=course_id))
+    return redirect(url_for("edit_class", course_id=course_id))
 
 
 @app.route("/classes/<int:course_id>/dates/new", methods=["GET", "POST"])

@@ -31,4 +31,51 @@
             <button type="submit" class="btn btn-danger">Delete Class</button>
         </form>
     </div>
+
+    <div class="card categories-card">
+        <h2 class="section-title">Assignment Categories</h2>
+        <p class="subtitle">Set up a category once (e.g. "Homework, 20% total") and its total is split evenly across however many assignments you put in it — no need to type a weight for each one.</p>
+        <form class="category-add-form" method="POST" action="{{ url_for('new_category', course_id=course.id) }}">
+            <input type="text" name="name" placeholder="e.g. Homework" required>
+            <input type="number" name="value" min="0" step="0.1" placeholder="{% if course.grading_mode == 'points' %}Total points{% else %}Total %{% endif %}" required>
+            <div class="color-picker">
+                <input type="hidden" name="color" value="{{ palette[0] }}" class="color-value">
+                {% for c in palette %}
+                <button type="button" class="swatch {% if loop.first %}selected{% endif %}" style="background: {{ c }};" onclick="pickSwatch(this, '{{ c }}')" aria-label="Pick color {{ c }}"></button>
+                {% endfor %}
+            </div>
+            <button class="btn btn-secondary btn-small" type="submit">Add Category</button>
+        </form>
+        {% if course.categories %}
+        <div class="category-list">
+            {% for cat in course.categories %}
+            <div class="category-row">
+                <form method="POST" action="{{ url_for('edit_category', course_id=course.id, category_id=cat.id) }}" class="category-color-form">
+                    <input type="hidden" name="name" value="{{ cat.name }}">
+                    <input type="hidden" name="value" value="{{ cat.value }}">
+                    <div class="color-picker">
+                        <input type="hidden" name="color" value="{{ cat.color }}" class="color-value">
+                        {% for c in palette %}
+                        <button type="button" class="swatch {% if cat.color == c %}selected{% endif %}" style="background: {{ c }};" onclick="pickSwatch(this, '{{ c }}', true)" aria-label="Set {{ cat.name }} color to {{ c }}"></button>
+                        {% endfor %}
+                    </div>
+                </form>
+                <span class="category-name">{{ cat.name }}</span>
+                <span class="category-meta">
+                    {{ cat.value }}{{ " pts" if course.grading_mode == "points" else "%" }} total &middot;
+                    {{ cat.assignments|length }} item{{ "s" if cat.assignments|length != 1 else "" }}
+                    {% if cat.per_item_value is not none %}
+                    &middot; {{ cat.per_item_value|round(2) }}{{ " pts" if course.grading_mode == "points" else "%" }} each
+                    {% endif %}
+                </span>
+                <form method="POST" action="{{ url_for('delete_category', course_id=course.id, category_id=cat.id) }}" onsubmit="return confirm('Delete category {{ cat.name }}? Its assignments will switch to a blank manual weight.');">
+                    <button type="submit" class="todo-delete-btn" aria-label="Delete category">&times;</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="subtitle">No categories yet.</p>
+        {% endif %}
+    </div>
 {% endblock %}
