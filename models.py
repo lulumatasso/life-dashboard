@@ -20,6 +20,9 @@ class Course(db.Model):
     assignments = db.relationship(
         "Assignment", backref="course", lazy=True, cascade="all, delete-orphan"
     )
+    categories = db.relationship(
+        "AssignmentCategory", backref="course", lazy=True, cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<Course {self.name}>"
@@ -30,24 +33,41 @@ class Course(db.Model):
         if not graded:
             return None
         if self.grading_mode == "points":
-            total_possible = sum(a.weight or 0 for a in graded)
+            total_possible = sum(a.effective_weight or 0 for a in graded)
             if total_possible == 0:
                 return None
             return sum(a.grade or 0 for a in graded) / total_possible * 100
-        total_weight = sum(a.weight or 0 for a in graded)
+        total_weight = sum(a.effective_weight or 0 for a in graded)
         if total_weight == 0:
             return None
-        return sum((a.grade or 0) * (a.weight or 0) for a in graded) / total_weight
+        return sum((a.grade or 0) * (a.effective_weight or 0) for a in graded) / total_weight
 
     @property
     def points_summary(self):
         if self.grading_mode != "points":
             return None
         graded = [a for a in self.assignments if a.status == "Graded" and a.grade is not None]
-        possible = sum(a.weight or 0 for a in graded)
+        possible = sum(a.effective_weight or 0 for a in graded)
         if possible == 0:
             return None
         return {"earned": sum(a.grade or 0 for a in graded), "possible": possible}
+
+
+class AssignmentCategory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey("course.id"), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    value = db.Column(db.Float, nullable=False)
+
+    assignments = db.relationship("Assignment", backref="category", lazy=True)
+
+    def __repr__(self):
+        return f"<AssignmentCategory {self.name}>"
+
+    @property
+    def per_item_value(self):
+        count = len(self.assignments)
+        return self.value / count if count else None
 
 
 STATUS_CHOICES = ["Not started", "In progress", "Submitted", "Graded"]
@@ -56,6 +76,7 @@ STATUS_CHOICES = ["Not started", "In progress", "Submitted", "Graded"]
 class Assignment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     course_id = db.Column(db.Integer, db.ForeignKey("course.id"), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey("assignment_category.id"))
     name = db.Column(db.String(150), nullable=False)
     due_date = db.Column(db.Date)
     weight = db.Column(db.Float)
@@ -64,6 +85,13 @@ class Assignment(db.Model):
 
     def __repr__(self):
         return f"<Assignment {self.name}>"
+
+    @property
+    def effective_weight(self):
+        """The weight/points actually used in grade math: auto-split from the category if assigned, else the manual value."""
+        if self.category_id and self.category:
+            return self.category.per_item_value
+        return self.weight
 
 
 APPLICATION_STATUS_CHOICES = ["Applied", "Phone Screen", "Interview", "Offer", "Rejected", "Closed"]

@@ -12,6 +12,7 @@ from models import (
     Course,
     GRADING_MODES,
     Assignment,
+    AssignmentCategory,
     STATUS_CHOICES,
     Application,
     APPLICATION_STATUS_CHOICES,
@@ -59,6 +60,13 @@ with app.app_context():
         for column_name, column_type in new_columns.items():
             if column_name not in existing_columns:
                 conn.execute(db.text(f"ALTER TABLE course ADD COLUMN {column_name} {column_type}"))
+        conn.commit()
+
+    # One-time upgrade: add category_id to Assignment if this database predates it
+    existing_assignment_columns = {col["name"] for col in inspector.get_columns("assignment")}
+    with db.engine.connect() as conn:
+        if "category_id" not in existing_assignment_columns:
+            conn.execute(db.text("ALTER TABLE assignment ADD COLUMN category_id INTEGER"))
         conn.commit()
 
 
@@ -296,8 +304,10 @@ def new_assignment(course_id):
         due_date_raw = request.form.get("due_date")
         weight_raw = request.form.get("weight")
         grade_raw = request.form.get("grade")
+        category_raw = request.form.get("category_id")
         assignment = Assignment(
             course_id=course.id,
+            category_id=int(category_raw) if category_raw else None,
             name=request.form["name"],
             due_date=datetime.strptime(due_date_raw, "%Y-%m-%d").date() if due_date_raw else None,
             weight=float(weight_raw) if weight_raw else None,
@@ -318,8 +328,10 @@ def edit_assignment(course_id, assignment_id):
         due_date_raw = request.form.get("due_date")
         weight_raw = request.form.get("weight")
         grade_raw = request.form.get("grade")
+        category_raw = request.form.get("category_id")
         assignment.name = request.form["name"]
         assignment.due_date = datetime.strptime(due_date_raw, "%Y-%m-%d").date() if due_date_raw else None
+        assignment.category_id = int(category_raw) if category_raw else None
         assignment.weight = float(weight_raw) if weight_raw else None
         assignment.status = request.form.get("status") or assignment.status
         assignment.grade = float(grade_raw) if grade_raw else None
@@ -334,6 +346,27 @@ def edit_assignment(course_id, assignment_id):
 def delete_assignment(course_id, assignment_id):
     assignment = Assignment.query.filter_by(id=assignment_id, course_id=course_id).first_or_404()
     db.session.delete(assignment)
+    db.session.commit()
+    return redirect(url_for("course_detail", course_id=course_id))
+
+
+@app.route("/classes/<int:course_id>/categories/new", methods=["POST"])
+def new_category(course_id):
+    course = Course.query.get_or_404(course_id)
+    name = request.form.get("name", "").strip()
+    value_raw = request.form.get("value")
+    if name and value_raw:
+        db.session.add(AssignmentCategory(course_id=course.id, name=name, value=float(value_raw)))
+        db.session.commit()
+    return redirect(url_for("course_detail", course_id=course.id))
+
+
+@app.route("/classes/<int:course_id>/categories/<int:category_id>/delete", methods=["POST"])
+def delete_category(course_id, category_id):
+    category = AssignmentCategory.query.filter_by(id=category_id, course_id=course_id).first_or_404()
+    for assignment in category.assignments:
+        assignment.category_id = None
+    db.session.delete(category)
     db.session.commit()
     return redirect(url_for("course_detail", course_id=course_id))
 

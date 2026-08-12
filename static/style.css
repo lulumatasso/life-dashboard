@@ -317,6 +317,19 @@ form.stack label {
     color: var(--text-muted);
 }
 
+.field-hint {
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+form.stack input:disabled {
+    background: var(--surface-sunken);
+    color: var(--text-muted);
+}
+
 form.stack input, form.stack select, form.stack textarea {
     padding: 10px 12px;
     border-radius: var(--radius-sm);
@@ -661,6 +674,75 @@ td.expense { color: var(--personal); font-weight: 600; }
 
 .class-calendar-card {
     margin-bottom: 28px;
+}
+
+.categories-card {
+    margin-bottom: 28px;
+}
+
+.category-add-form {
+    display: flex;
+    gap: 8px;
+    margin: 14px 0;
+    flex-wrap: wrap;
+}
+
+.category-add-form input {
+    padding: 9px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    font-family: inherit;
+    font-size: 0.9rem;
+    background: var(--surface);
+    color: var(--text);
+}
+
+.category-add-form input[name="name"] {
+    flex: 2;
+    min-width: 140px;
+}
+
+.category-add-form input[name="value"] {
+    flex: 1;
+    min-width: 100px;
+}
+
+.category-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.category-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 4px;
+    border-bottom: 1px solid var(--border);
+}
+
+.category-row:last-child {
+    border-bottom: none;
+}
+
+.category-name {
+    font-weight: 600;
+    min-width: 110px;
+}
+
+.category-meta {
+    flex: 1;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.category-tag {
+    margin-top: 4px;
+    margin-left: 0;
+    display: inline-block;
+    font-size: 0.68rem;
+    padding: 2px 8px;
 }
 
 .class-calendar-header {

@@ -12,8 +12,16 @@
             <label>Due date
                 <input type="date" name="due_date">
             </label>
-            <label>{% if course.grading_mode == "points" %}Points possible{% else %}Weight (% of final grade){% endif %}
-                <input type="number" name="weight" min="0" {% if course.grading_mode != "points" %}max="100"{% endif %} step="0.1">
+            <label>Category (optional)
+                <select name="category_id" onchange="document.getElementById('weight-field').disabled = !!this.value">
+                    <option value="">No category — enter weight manually</option>
+                    {% for cat in course.categories %}
+                    <option value="{{ cat.id }}">{{ cat.name }} ({{ cat.value }}{{ " pts" if course.grading_mode == "points" else "%" }} total, {{ cat.assignments|length }} item{{ "s" if cat.assignments|length != 1 else "" }} so far)</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>{% if course.grading_mode == "points" %}Points possible{% else %}Weight (% of final grade){% endif %} <span class="field-hint">(ignored if a category is selected)</span>
+                <input type="number" id="weight-field" name="weight" min="0" {% if course.grading_mode != "points" %}max="100"{% endif %} step="0.1">
             </label>
             <label>Status
                 <select name="status">
