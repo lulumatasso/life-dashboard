@@ -41,7 +41,12 @@
         <span class="grade-value">
             {% if course.current_grade is not none %}{{ "%.1f"|format(course.current_grade) }}%{% else %}&mdash;{% endif %}
         </span>
-        <span class="subtitle">current grade based on graded assignments</span>
+        <span class="subtitle">
+            {% if course.grading_mode == "points" and course.points_summary %}
+            {{ course.points_summary.earned|round(1) }} / {{ course.points_summary.possible|round(1) }} pts &middot;
+            {% endif %}
+            current grade based on graded assignments
+        </span>
     </div>
 
     <div class="card class-calendar-card">
@@ -84,9 +89,9 @@
                 <th>Assignment</th>
                 <th>Due date</th>
                 <th>Days Left</th>
-                <th>Weight</th>
+                <th>{% if course.grading_mode == "points" %}Points{% else %}Weight{% endif %}</th>
                 <th>Status</th>
-                <th>Grade</th>
+                <th>{% if course.grading_mode == "points" %}Points Earned{% else %}Grade{% endif %}</th>
             </tr>
         </thead>
         <tbody>
@@ -108,9 +113,9 @@
                     —
                     {% endif %}
                 </td>
-                <td>{{ (a.weight ~ "%") if a.weight is not none else "—" }}</td>
+                <td>{% if a.weight is not none %}{{ a.weight }}{{ " pts" if course.grading_mode == "points" else "%" }}{% else %}—{% endif %}</td>
                 <td><span class="status-pill status-{{ a.status|lower|replace(' ', '-') }}">{{ a.status }}</span></td>
-                <td>{{ (a.grade ~ "%") if a.grade is not none else "—" }}</td>
+                <td>{% if a.grade is not none %}{{ a.grade }}{{ " pts" if course.grading_mode == "points" else "%" }}{% else %}—{% endif %}</td>
             </tr>
             {% endfor %}
         </tbody>

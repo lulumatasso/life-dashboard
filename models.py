@@ -3,6 +3,9 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
 
+GRADING_MODES = ["percentage", "points"]
+
+
 class Course(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -12,6 +15,7 @@ class Course(db.Model):
     syllabus_filename = db.Column(db.String(255))
     syllabus_original_name = db.Column(db.String(255))
     syllabus_url = db.Column(db.String(500))
+    grading_mode = db.Column(db.String(12), default="percentage")
 
     assignments = db.relationship(
         "Assignment", backref="course", lazy=True, cascade="all, delete-orphan"
@@ -23,10 +27,27 @@ class Course(db.Model):
     @property
     def current_grade(self):
         graded = [a for a in self.assignments if a.status == "Graded" and a.grade is not None]
+        if not graded:
+            return None
+        if self.grading_mode == "points":
+            total_possible = sum(a.weight or 0 for a in graded)
+            if total_possible == 0:
+                return None
+            return sum(a.grade or 0 for a in graded) / total_possible * 100
         total_weight = sum(a.weight or 0 for a in graded)
         if total_weight == 0:
             return None
         return sum((a.grade or 0) * (a.weight or 0) for a in graded) / total_weight
+
+    @property
+    def points_summary(self):
+        if self.grading_mode != "points":
+            return None
+        graded = [a for a in self.assignments if a.status == "Graded" and a.grade is not None]
+        possible = sum(a.weight or 0 for a in graded)
+        if possible == 0:
+            return None
+        return {"earned": sum(a.grade or 0 for a in graded), "possible": possible}
 
 
 STATUS_CHOICES = ["Not started", "In progress", "Submitted", "Graded"]

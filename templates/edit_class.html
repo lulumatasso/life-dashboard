@@ -17,6 +17,12 @@
             <label>Term
                 <input type="text" name="term" value="{{ course.term or '' }}" placeholder="e.g. Fall 2026">
             </label>
+            <label>Grading system
+                <select name="grading_mode">
+                    <option value="percentage" {% if course.grading_mode != "points" %}selected{% endif %}>Percentage (each item worth a % of final grade)</option>
+                    <option value="points" {% if course.grading_mode == "points" %}selected{% endif %}>Points (e.g. graded out of 1000 total points)</option>
+                </select>
+            </label>
             <div class="button-group">
                 <button class="btn" type="submit">Save Changes</button>
             </div>

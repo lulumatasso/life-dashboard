@@ -10,6 +10,7 @@ from werkzeug.utils import secure_filename
 from models import (
     db,
     Course,
+    GRADING_MODES,
     Assignment,
     STATUS_CHOICES,
     Application,
@@ -52,6 +53,7 @@ with app.app_context():
         "syllabus_filename": "VARCHAR(255)",
         "syllabus_original_name": "VARCHAR(255)",
         "syllabus_url": "VARCHAR(500)",
+        "grading_mode": "VARCHAR(12)",
     }
     with db.engine.connect() as conn:
         for column_name, column_type in new_columns.items():
@@ -217,11 +219,12 @@ def new_class():
             professor=request.form.get("professor"),
             credit_hours=request.form.get("credit_hours") or None,
             term=request.form.get("term"),
+            grading_mode=request.form.get("grading_mode") or "percentage",
         )
         db.session.add(course)
         db.session.commit()
         return redirect(url_for("classes"))
-    return render_template("new_class.html")
+    return render_template("new_class.html", grading_modes=GRADING_MODES)
 
 
 @app.route("/classes/<int:course_id>/edit", methods=["GET", "POST"])
@@ -232,9 +235,10 @@ def edit_class(course_id):
         course.professor = request.form.get("professor")
         course.credit_hours = request.form.get("credit_hours") or None
         course.term = request.form.get("term")
+        course.grading_mode = request.form.get("grading_mode") or "percentage"
         db.session.commit()
         return redirect(url_for("course_detail", course_id=course.id))
-    return render_template("edit_class.html", course=course)
+    return render_template("edit_class.html", course=course, grading_modes=GRADING_MODES)
 
 
 @app.route("/classes/<int:course_id>/delete", methods=["POST"])
