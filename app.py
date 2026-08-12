@@ -1,6 +1,6 @@
 import calendar as cal_module
 import os
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for, session
@@ -17,6 +17,8 @@ from models import (
     Todo,
     Event,
     EVENT_CATEGORIES,
+    Habit,
+    HabitCompletion,
 )
 import syllabus
 
@@ -100,6 +102,23 @@ def get_month_calendar(year, month):
     }
 
 
+def habit_streak(habit, today):
+    """Count consecutive completed days ending today (or yesterday, if today isn't done yet)."""
+    completed_dates = {c.date for c in habit.completions}
+    streak = 0
+    day = today if today in completed_dates else today - timedelta(days=1)
+    while day in completed_dates:
+        streak += 1
+        day -= timedelta(days=1)
+    return streak
+
+
+def habit_history(habit, today, days=7):
+    """Last N days as a list of (date, completed) for a simple dot history."""
+    completed_dates = {c.date for c in habit.completions}
+    return [(today - timedelta(days=i), (today - timedelta(days=i)) in completed_dates) for i in range(days - 1, -1, -1)]
+
+
 @app.route("/")
 def home():
     today = date.today()
@@ -115,6 +134,16 @@ def home():
         Application.status.notin_(["Rejected", "Closed"])
     ).count()
     todos = Todo.query.order_by(Todo.created_at).all()
+    all_habits = Habit.query.order_by(Habit.created_at).all()
+    habit_rows = [
+        {
+            "habit": h,
+            "streak": habit_streak(h, today),
+            "history": habit_history(h, today, days=7),
+            "done_today": today in {c.date for c in h.completions},
+        }
+        for h in all_habits
+    ]
     month_ctx = get_month_calendar(today.year, today.month)
 
     upcoming_events = []
@@ -133,6 +162,7 @@ def home():
         recent_applications=recent_applications,
         active_applications=active_applications,
         todos=todos,
+        habit_rows=habit_rows,
         upcoming_events=upcoming_events,
         **month_ctx,
     )
@@ -141,7 +171,15 @@ def home():
 @app.route("/classes")
 def classes():
     courses = Course.query.all()
-    return render_template("classes.html", courses=courses)
+    total_credit_hours = sum(c.credit_hours or 0 for c in courses)
+    graded = [c.current_grade for c in courses if c.current_grade is not None]
+    average_grade = sum(graded) / len(graded) if graded else None
+    return render_template(
+        "classes.html",
+        courses=courses,
+        total_credit_hours=total_credit_hours,
+        average_grade=average_grade,
+    )
 
 
 @app.route("/classes/new", methods=["GET", "POST"])
@@ -348,11 +386,16 @@ def applications():
     if status_filter:
         query = query.filter_by(status=status_filter)
     apps = query.order_by(Application.date_applied.desc()).all()
+    status_counts = {
+        choice: Application.query.filter_by(status=choice).count() for choice in APPLICATION_STATUS_CHOICES
+    }
     return render_template(
         "applications.html",
         applications=apps,
         status_choices=APPLICATION_STATUS_CHOICES,
         status_filter=status_filter,
+        status_counts=status_counts,
+        total_applications=Application.query.count(),
     )
 
 
@@ -429,6 +472,22 @@ def budget():
     prev_month, prev_year = (12, year - 1) if month == 1 else (month - 1, year)
     next_month, next_year = (1, year + 1) if month == 12 else (month + 1, year)
 
+    monthly_trend = []
+    trend_month, trend_year = month, year
+    for _ in range(6):
+        t_days_in_month = cal_module.monthrange(trend_year, trend_month)[1]
+        t_start = date(trend_year, trend_month, 1)
+        t_end = date(trend_year, trend_month, t_days_in_month)
+        t_transactions = Transaction.query.filter(Transaction.date >= t_start, Transaction.date <= t_end).all()
+        t_income = sum(t.amount for t in t_transactions if t.type == "Income")
+        t_expense = sum(t.amount for t in t_transactions if t.type == "Expense")
+        monthly_trend.append(
+            {"label": cal_module.month_abbr[trend_month], "net": t_income - t_expense}
+        )
+        trend_month, trend_year = (12, trend_year - 1) if trend_month == 1 else (trend_month - 1, trend_year)
+    monthly_trend.reverse()
+    max_abs_net = max((abs(m["net"]) for m in monthly_trend), default=0) or 1
+
     return render_template(
         "budget.html",
         today=today,
@@ -438,6 +497,8 @@ def budget():
         remaining=income_total - expense_total,
         category_breakdown=category_breakdown,
         max_category_total=max_category_total,
+        monthly_trend=monthly_trend,
+        max_abs_net=max_abs_net,
         month_name=cal_module.month_name[month],
         year=year,
         month=month,
@@ -473,6 +534,52 @@ def delete_todo(todo_id):
     db.session.delete(todo)
     db.session.commit()
     return redirect(url_for("home"))
+
+
+@app.route("/habits")
+def habits():
+    today = date.today()
+    all_habits = Habit.query.order_by(Habit.created_at).all()
+    habit_rows = [
+        {
+            "habit": h,
+            "streak": habit_streak(h, today),
+            "history": habit_history(h, today, days=14),
+            "done_today": today in {c.date for c in h.completions},
+        }
+        for h in all_habits
+    ]
+    return render_template("habits.html", habit_rows=habit_rows, today=today)
+
+
+@app.route("/habits/new", methods=["POST"])
+def new_habit():
+    name = request.form.get("name", "").strip()
+    if name:
+        db.session.add(Habit(name=name))
+        db.session.commit()
+    return redirect(url_for("habits"))
+
+
+@app.route("/habits/<int:habit_id>/toggle_today", methods=["POST"])
+def toggle_habit_today(habit_id):
+    habit = Habit.query.get_or_404(habit_id)
+    today = date.today()
+    existing = HabitCompletion.query.filter_by(habit_id=habit.id, date=today).first()
+    if existing:
+        db.session.delete(existing)
+    else:
+        db.session.add(HabitCompletion(habit_id=habit.id, date=today))
+    db.session.commit()
+    return redirect(request.referrer or url_for("habits"))
+
+
+@app.route("/habits/<int:habit_id>/delete", methods=["POST"])
+def delete_habit(habit_id):
+    habit = Habit.query.get_or_404(habit_id)
+    db.session.delete(habit)
+    db.session.commit()
+    return redirect(url_for("habits"))
 
 
 if __name__ == "__main__":

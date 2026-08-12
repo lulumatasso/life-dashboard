@@ -3,11 +3,36 @@
 {% block content %}
     <div class="page-header">
         <div>
-            <h1>My Classes</h1>
+            <h1>
+                <span class="page-title-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 6.5c-1.6-1.1-4-1.6-6.5-1.2v13c2.5-.4 4.9.1 6.5 1.2 1.6-1.1 4-1.6 6.5-1.2v-13c-2.5-.4-4.9.1-6.5 1.2Z"/>
+                        <path d="M12 6.5v13"/>
+                    </svg>
+                </span>
+                My Classes
+            </h1>
             <p class="subtitle">Everything you're enrolled in this term.</p>
         </div>
         <a class="btn" href="{{ url_for('new_class') }}">+ Add Class</a>
     </div>
+
+    {% if courses %}
+    <div class="stat-row">
+        <div class="stat-card">
+            <span class="stat-label">Classes</span>
+            <span class="stat-value">{{ courses|length }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Credit Hours</span>
+            <span class="stat-value">{{ total_credit_hours }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Average Grade</span>
+            <span class="stat-value">{% if average_grade is not none %}{{ "%.1f"|format(average_grade) }}%{% else %}—{% endif %}</span>
+        </div>
+    </div>
+    {% endif %}
 
     {% if courses %}
     <div class="course-grid">

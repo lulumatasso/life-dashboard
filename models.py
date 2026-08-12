@@ -101,3 +101,24 @@ class Todo(db.Model):
 
     def __repr__(self):
         return f"<Todo {self.text}>"
+
+
+class Habit(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+    completions = db.relationship(
+        "HabitCompletion", backref="habit", lazy=True, cascade="all, delete-orphan"
+    )
+
+    def __repr__(self):
+        return f"<Habit {self.name}>"
+
+
+class HabitCompletion(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    habit_id = db.Column(db.Integer, db.ForeignKey("habit.id"), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+
+    __table_args__ = (db.UniqueConstraint("habit_id", "date", name="uq_habit_date"),)

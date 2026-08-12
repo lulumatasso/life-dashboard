@@ -3,11 +3,31 @@
 {% block content %}
     <div class="page-header">
         <div>
-            <h1>Applications</h1>
+            <h1>
+                <span class="page-title-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3.5" y="7.5" width="17" height="11.5" rx="2"/>
+                        <path d="M8.5 7.5V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5"/>
+                        <path d="M3.5 12.5h17"/>
+                    </svg>
+                </span>
+                Applications
+            </h1>
             <p class="subtitle">Every internship and job you've applied to.</p>
         </div>
         <a class="btn btn-professional" href="{{ url_for('new_application') }}">+ New Application</a>
     </div>
+
+    {% if total_applications %}
+    <div class="pipeline-row">
+        {% for choice in status_choices %}
+        <a class="pipeline-tile status-{{ choice|lower|replace(' ', '-') }} {% if status_filter == choice %}active{% endif %}" href="{{ url_for('applications', status=choice) }}">
+            <span class="pipeline-count">{{ status_counts[choice] }}</span>
+            <span class="pipeline-label">{{ choice }}</span>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
 
     <div class="filter-bar">
         <a class="filter-chip {% if not status_filter %}active{% endif %}" href="{{ url_for('applications') }}">All</a>

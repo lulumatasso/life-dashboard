@@ -3,7 +3,15 @@
 {% block content %}
     <div class="page-header">
         <div>
-            <h1>Budget</h1>
+            <h1>
+                <span class="page-title-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="8"/>
+                        <path d="M12 7.5v9M9.5 9.3c0-1 1-1.6 2.5-1.6s2.5.6 2.5 1.6c0 2.2-5 1.5-5 3.7 0 1 1 1.6 2.5 1.6s2.5-.6 2.5-1.6"/>
+                    </svg>
+                </span>
+                Budget
+            </h1>
             <p class="subtitle">{{ month_name }} {{ year }}</p>
         </div>
         <div class="calendar-nav">
@@ -24,6 +32,19 @@
         <div class="stat-card">
             <span class="stat-label">Remaining</span>
             <span class="stat-value {% if remaining < 0 %}expense{% else %}income{% endif %}">${{ "%.2f"|format(remaining) }}</span>
+        </div>
+    </div>
+
+    <div class="card trend-card">
+        <h2 class="section-title">6-Month Trend (Net Income − Expense)</h2>
+        <div class="trend-chart">
+            {% for m in monthly_trend %}
+            <div class="trend-bar-wrap">
+                <span class="trend-value {% if m.net < 0 %}expense{% else %}income{% endif %}">{{ "%.0f"|format(m.net) }}</span>
+                <div class="trend-bar {% if m.net < 0 %}negative{% else %}positive{% endif %}" style="height: {{ ((m.net|abs) / max_abs_net * 100) if max_abs_net else 2 }}%;"></div>
+                <span class="trend-label">{{ m.label }}</span>
+            </div>
+            {% endfor %}
         </div>
     </div>
 

@@ -7,7 +7,12 @@
     <div class="dashboard-grid">
         <div class="panel panel-wide">
             <div class="panel-header">
-                <span class="panel-icon">📚</span>
+                <span class="panel-icon-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 6.5c-1.6-1.1-4-1.6-6.5-1.2v13c2.5-.4 4.9.1 6.5 1.2 1.6-1.1 4-1.6 6.5-1.2v-13c-2.5-.4-4.9.1-6.5 1.2Z"/>
+                        <path d="M12 6.5v13"/>
+                    </svg>
+                </span>
                 <h2>Current Classes</h2>
                 <a class="panel-link" href="{{ url_for('classes') }}">View all &rarr;</a>
             </div>
@@ -30,7 +35,12 @@
 
         <div class="panel">
             <div class="panel-header">
-                <span class="panel-icon">⏰</span>
+                <span class="panel-icon-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="8"/>
+                        <path d="M12 8v4l3 2"/>
+                    </svg>
+                </span>
                 <h2>Upcoming Deadlines</h2>
             </div>
             {% if upcoming_assignments %}
@@ -49,7 +59,13 @@
 
         <div class="panel">
             <div class="panel-header">
-                <span class="panel-icon">💼</span>
+                <span class="panel-icon-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3.5" y="7.5" width="17" height="11.5" rx="2"/>
+                        <path d="M8.5 7.5V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5"/>
+                        <path d="M3.5 12.5h17"/>
+                    </svg>
+                </span>
                 <h2>Applications</h2>
                 <a class="panel-link" href="{{ url_for('applications') }}">View all &rarr;</a>
             </div>
@@ -70,7 +86,13 @@
 
         <div class="panel panel-wide">
             <div class="panel-header">
-                <span class="panel-icon">🗓️</span>
+                <span class="panel-icon-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="4" y="5.5" width="16" height="14.5" rx="2"/>
+                        <path d="M4 9.5h16"/>
+                        <path d="M8.5 3v4M15.5 3v4"/>
+                    </svg>
+                </span>
                 <h2>Calendar</h2>
                 <span class="panel-subheading">{{ month_name }} {{ year }}</span>
                 <a class="panel-link" href="{{ url_for('new_event') }}">+ Add Event</a>
@@ -125,9 +147,16 @@
             </div>
         </div>
 
-        <div class="panel panel-wide">
+        <div class="panel">
             <div class="panel-header">
-                <span class="panel-icon">✅</span>
+                <span class="panel-icon-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 6h6M4 12h6M4 18h6"/>
+                        <path d="M14 6l1.5 1.5L18 5"/>
+                        <path d="M14 12l1.5 1.5L18 11"/>
+                        <path d="M14 18l1.5 1.5L18 17"/>
+                    </svg>
+                </span>
                 <h2>Weekly To-Do List</h2>
             </div>
             <form class="todo-add-form" method="POST" action="{{ url_for('new_todo') }}">
@@ -150,6 +179,41 @@
             </ul>
             {% else %}
             <p class="subtitle">No tasks yet. Add your first one above.</p>
+            {% endif %}
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-icon-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 21c-3.5 0-6-2.5-6-6 0-2.5 1.5-4 2.5-5.5C9 8 9.5 6 11 4c-.3 2.5 1 3.5 2 5 1 1.3 3 3 3 6 0 3.5-2.5 6-6 6Z"/>
+                    </svg>
+                </span>
+                <h2>Habits</h2>
+                <a class="panel-link" href="{{ url_for('habits') }}">Manage &rarr;</a>
+            </div>
+            {% if habit_rows %}
+            <div>
+                {% for row in habit_rows %}
+                <div class="habit-mini">
+                    <div>
+                        <div>{{ row.habit.name }}</div>
+                        <div class="habit-mini-history">
+                            {% for day, done in row.history %}
+                            <span class="habit-mini-dot {% if done %}done{% endif %}" title="{{ day.strftime('%b %d') }}"></span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <form method="POST" action="{{ url_for('toggle_habit_today', habit_id=row.habit.id) }}">
+                        <button type="submit" class="btn btn-small {% if row.done_today %}btn-professional{% else %}btn-secondary{% endif %}">
+                            {% if row.done_today %}✓{% else %}Mark{% endif %}
+                        </button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="subtitle">No habits yet. <a href="{{ url_for('habits') }}">Start one</a>.</p>
             {% endif %}
         </div>
     </div>
