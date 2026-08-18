@@ -71,7 +71,7 @@ with app.app_context():
         )
         ensure_columns(inspector, conn, "assignment", {"category_id": "INTEGER"})
         ensure_columns(inspector, conn, "assignment_category", {"color": "VARCHAR(7)"})
-        ensure_columns(inspector, conn, "event", {"course_id": "INTEGER"})
+        ensure_columns(inspector, conn, "event", {"course_id": "INTEGER", "start_time": "TIME", "end_time": "TIME"})
         conn.execute(
             db.text("UPDATE assignment_category SET color = :color WHERE color IS NULL"),
             {"color": DEFAULT_CATEGORY_COLOR},
@@ -96,6 +96,19 @@ CATEGORY_COLOR_PALETTE = [
     "#b5654a",  # terracotta
     "#6b7c4f",  # olive
 ]
+
+
+def parse_time(raw):
+    return datetime.strptime(raw, "%H:%M").time() if raw else None
+
+
+def format_time_range(start_time, end_time):
+    if not start_time:
+        return None
+    label = start_time.strftime("%I:%M %p").lstrip("0")
+    if end_time:
+        label += "–" + end_time.strftime("%I:%M %p").lstrip("0")
+    return label
 
 
 def get_month_calendar(year, month):
@@ -150,6 +163,7 @@ def get_month_calendar(year, month):
         events_by_day.setdefault(e.date.day, []).append(
             {
                 "title": e.title,
+                "time_label": format_time_range(e.start_time, e.end_time),
                 "category": e.category,
                 "color": EVENT_CATEGORY_COLORS.get(e.category, DEFAULT_CATEGORY_COLOR),
                 "url": url_for("edit_event", event_id=e.id),
@@ -321,6 +335,7 @@ def course_detail(course_id):
             events_by_day.setdefault(e.date.day, []).append(
                 {
                     "title": e.title,
+                    "time_label": format_time_range(e.start_time, e.end_time),
                     "color": EVENT_CATEGORY_COLORS["personal"],
                     "url": url_for("edit_event", event_id=e.id),
                 }
@@ -440,7 +455,14 @@ def new_course_date(course_id):
     if request.method == "POST":
         event_date = datetime.strptime(request.form["date"], "%Y-%m-%d").date()
         db.session.add(
-            Event(course_id=course.id, title=request.form["title"], date=event_date, category="academic")
+            Event(
+                course_id=course.id,
+                title=request.form["title"],
+                date=event_date,
+                start_time=parse_time(request.form.get("start_time")),
+                end_time=parse_time(request.form.get("end_time")),
+                category="academic",
+            )
         )
         db.session.commit()
         return redirect(url_for("course_detail", course_id=course.id, year=event_date.year, month=event_date.month))
@@ -564,6 +586,8 @@ def new_event():
         event = Event(
             title=request.form["title"],
             date=event_date,
+            start_time=parse_time(request.form.get("start_time")),
+            end_time=parse_time(request.form.get("end_time")),
             category=request.form.get("category") or "personal",
             notes=request.form.get("notes"),
         )
@@ -580,6 +604,8 @@ def edit_event(event_id):
     if request.method == "POST":
         event.title = request.form["title"]
         event.date = datetime.strptime(request.form["date"], "%Y-%m-%d").date()
+        event.start_time = parse_time(request.form.get("start_time"))
+        event.end_time = parse_time(request.form.get("end_time"))
         event.category = request.form.get("category") or event.category
         event.notes = request.form.get("notes")
         db.session.commit()

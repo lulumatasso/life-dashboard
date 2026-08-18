@@ -317,6 +317,15 @@ form.stack label {
     color: var(--text-muted);
 }
 
+.field-row {
+    display: flex;
+    gap: 12px;
+}
+
+.field-row label {
+    flex: 1;
+}
+
 .field-hint {
     font-weight: 400;
     text-transform: none;

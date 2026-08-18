@@ -72,7 +72,7 @@
                     <td class="calendar-cell {% if year == today.year and month == today.month and day == today.day %}today{% endif %}">
                         <div class="calendar-day-number">{{ day }}</div>
                         {% for event in events_by_day.get(day, []) %}
-                        <a class="calendar-event" href="{{ event.url }}" style="background: {{ event.color }};">{{ event.title }}</a>
+                        <a class="calendar-event" href="{{ event.url }}" style="background: {{ event.color }};">{% if event.time_label %}<span class="event-time">{{ event.time_label }}</span> {% endif %}{{ event.title }}</a>
                         {% endfor %}
                     </td>
                     {% endif %}

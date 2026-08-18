@@ -12,6 +12,14 @@
             <label>Date
                 <input type="date" name="date" value="{{ default_date }}" required>
             </label>
+            <div class="field-row">
+                <label>Start time <span class="field-hint">(optional — leave blank for an all-day event)</span>
+                    <input type="time" name="start_time">
+                </label>
+                <label>End time <span class="field-hint">(optional)</span>
+                    <input type="time" name="end_time">
+                </label>
+            </div>
             <label>Category
                 <select name="category">
                     {% for c in categories %}

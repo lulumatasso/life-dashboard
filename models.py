@@ -146,6 +146,8 @@ class Event(db.Model):
     course_id = db.Column(db.Integer, db.ForeignKey("course.id"))
     title = db.Column(db.String(150), nullable=False)
     date = db.Column(db.Date, nullable=False)
+    start_time = db.Column(db.Time)
+    end_time = db.Column(db.Time)
     category = db.Column(db.String(20), default="personal")
     notes = db.Column(db.Text)
 

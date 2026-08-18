@@ -11,6 +11,14 @@
             <label>Date
                 <input type="date" name="date" value="{{ event.date.isoformat() }}" required>
             </label>
+            <div class="field-row">
+                <label>Start time <span class="field-hint">(optional — leave blank for an all-day event)</span>
+                    <input type="time" name="start_time" value="{{ event.start_time.strftime('%H:%M') if event.start_time else '' }}">
+                </label>
+                <label>End time <span class="field-hint">(optional)</span>
+                    <input type="time" name="end_time" value="{{ event.end_time.strftime('%H:%M') if event.end_time else '' }}">
+                </label>
+            </div>
             <label>Category
                 <select name="category">
                     {% for c in categories %}
