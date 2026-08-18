@@ -37,6 +37,41 @@
         {% endif %}
     </div>
 
+    <div class="card">
+        <h2 class="section-title">Class Schedule</h2>
+        <p class="subtitle">When and where this class meets each week.</p>
+        {% if meetings %}
+        <div class="meeting-list">
+            {% for m in meetings %}
+            <div class="meeting-row">
+                <span class="meeting-day">{{ weekdays[m.day_of_week] }}</span>
+                <span class="meeting-meta">
+                    {{ m.start_time.strftime('%I:%M %p').lstrip('0') }}{% if m.end_time %}–{{ m.end_time.strftime('%I:%M %p').lstrip('0') }}{% endif %}
+                    {% if m.location %} &middot; {{ m.location }}{% endif %}
+                </span>
+                <form method="POST" action="{{ url_for('delete_class_meeting', course_id=course.id, meeting_id=m.id) }}">
+                    <button type="submit" class="todo-delete-btn" aria-label="Delete meeting time">&times;</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="subtitle">No meeting times set yet.</p>
+        {% endif %}
+        <form class="category-add-form meeting-add-form" method="POST" action="{{ url_for('new_class_meeting', course_id=course.id) }}">
+            <select name="day_of_week" required>
+                <option value="" disabled selected>Day</option>
+                {% for wd in weekdays %}
+                <option value="{{ loop.index0 }}">{{ wd }}</option>
+                {% endfor %}
+            </select>
+            <input type="time" name="start_time" required>
+            <input type="time" name="end_time">
+            <input type="text" name="location" placeholder="Location (optional)">
+            <button class="btn btn-secondary btn-small" type="submit">Add Meeting</button>
+        </form>
+    </div>
+
     <div class="grade-summary">
         <span class="grade-value">
             {% if course.current_grade is not none %}{{ "%.1f"|format(course.current_grade) }}%{% else %}&mdash;{% endif %}

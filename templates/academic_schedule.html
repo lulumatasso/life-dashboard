@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Academic Schedule — Life Dashboard{% endblock %}
+{% block content %}
+    <div class="view-toggle">
+        <a class="view-toggle-tab" href="{{ url_for('calendar_view') }}">Main Calendar</a>
+        <a class="view-toggle-tab active" href="{{ url_for('academic_schedule') }}">Academic Schedule</a>
+    </div>
+
+    <div class="page-header">
+        <div>
+            <h1>Academic Schedule</h1>
+            <p class="subtitle">Your recurring weekly class meeting times. Add times from each class's page.</p>
+        </div>
+    </div>
+
+    <div class="schedule-grid">
+        {% for day_num in range(7) %}
+        <div class="schedule-day-column">
+            <div class="schedule-day-header">{{ weekdays[day_num] }}</div>
+            {% if meetings_by_day[day_num] %}
+            {% for row in meetings_by_day[day_num] %}
+            <a class="schedule-block" href="{{ url_for('course_detail', course_id=row.course.id) }}" style="background: {{ row.color }}1a; border-left-color: {{ row.color }};">
+                <span class="schedule-block-time">{{ row.time_label }}</span>
+                <span class="schedule-block-name">{{ row.course.name }}</span>
+                {% if row.meeting.location %}<span class="schedule-block-location">{{ row.meeting.location }}</span>{% endif %}
+            </a>
+            {% endfor %}
+            {% else %}
+            <p class="schedule-day-empty">&mdash;</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+{% endblock %}

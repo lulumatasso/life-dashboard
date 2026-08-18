@@ -26,6 +26,9 @@ class Course(db.Model):
     events = db.relationship(
         "Event", backref="course", lazy=True, cascade="all, delete-orphan"
     )
+    meetings = db.relationship(
+        "ClassMeeting", backref="course", lazy=True, cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<Course {self.name}>"
@@ -54,6 +57,21 @@ class Course(db.Model):
         if possible == 0:
             return None
         return {"earned": sum(a.grade or 0 for a in graded), "possible": possible}
+
+
+WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+
+class ClassMeeting(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey("course.id"), nullable=False)
+    day_of_week = db.Column(db.Integer, nullable=False)
+    start_time = db.Column(db.Time, nullable=False)
+    end_time = db.Column(db.Time)
+    location = db.Column(db.String(150))
+
+    def __repr__(self):
+        return f"<ClassMeeting course={self.course_id} day={self.day_of_week}>"
 
 
 DEFAULT_CATEGORY_COLOR = "#5c7285"

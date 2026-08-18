@@ -25,6 +25,8 @@ from models import (
     EVENT_CATEGORIES,
     Habit,
     HabitCompletion,
+    ClassMeeting,
+    WEEKDAYS,
 )
 import syllabus
 
@@ -96,6 +98,10 @@ CATEGORY_COLOR_PALETTE = [
     "#b5654a",  # terracotta
     "#6b7c4f",  # olive
 ]
+
+
+def course_color(course):
+    return CATEGORY_COLOR_PALETTE[course.id % len(CATEGORY_COLOR_PALETTE)]
 
 
 def parse_time(raw):
@@ -344,10 +350,14 @@ def course_detail(course_id):
     prev_month, prev_year = (12, year - 1) if month == 1 else (month - 1, year)
     next_month, next_year = (1, year + 1) if month == 12 else (month + 1, year)
 
+    sorted_meetings = sorted(course.meetings, key=lambda m: (m.day_of_week, m.start_time))
+
     return render_template(
         "course_detail.html",
         course=course,
         assignments=sorted_assignments,
+        meetings=sorted_meetings,
+        weekdays=WEEKDAYS,
         today=today,
         weeks=weeks,
         events_by_day=events_by_day,
@@ -360,6 +370,33 @@ def course_detail(course_id):
         next_month=next_month,
         palette=CATEGORY_COLOR_PALETTE,
     )
+
+
+@app.route("/classes/<int:course_id>/meetings/new", methods=["POST"])
+def new_class_meeting(course_id):
+    course = Course.query.get_or_404(course_id)
+    start_time = parse_time(request.form.get("start_time"))
+    day_raw = request.form.get("day_of_week")
+    if start_time and day_raw is not None and day_raw != "":
+        db.session.add(
+            ClassMeeting(
+                course_id=course.id,
+                day_of_week=int(day_raw),
+                start_time=start_time,
+                end_time=parse_time(request.form.get("end_time")),
+                location=request.form.get("location") or None,
+            )
+        )
+        db.session.commit()
+    return redirect(url_for("course_detail", course_id=course.id))
+
+
+@app.route("/classes/<int:course_id>/meetings/<int:meeting_id>/delete", methods=["POST"])
+def delete_class_meeting(course_id, meeting_id):
+    meeting = ClassMeeting.query.filter_by(id=meeting_id, course_id=course_id).first_or_404()
+    db.session.delete(meeting)
+    db.session.commit()
+    return redirect(url_for("course_detail", course_id=course_id))
 
 
 @app.route("/classes/<int:course_id>/assignments/new", methods=["GET", "POST"])
@@ -577,6 +614,25 @@ def calendar_view():
     month = request.args.get("month", type=int) or today.month
     month_ctx = get_month_calendar(year, month)
     return render_template("calendar.html", today=today, **month_ctx)
+
+
+@app.route("/calendar/schedule")
+def academic_schedule():
+    courses = Course.query.all()
+    meetings_by_day = {i: [] for i in range(7)}
+    for course in courses:
+        for m in course.meetings:
+            meetings_by_day[m.day_of_week].append(
+                {
+                    "course": course,
+                    "meeting": m,
+                    "time_label": format_time_range(m.start_time, m.end_time),
+                    "color": course_color(course),
+                }
+            )
+    for day_meetings in meetings_by_day.values():
+        day_meetings.sort(key=lambda row: row["meeting"].start_time)
+    return render_template("academic_schedule.html", meetings_by_day=meetings_by_day, weekdays=WEEKDAYS)
 
 
 @app.route("/calendar/events/new", methods=["GET", "POST"])

@@ -1,6 +1,11 @@
 {% extends "base.html" %}
 {% block title %}Calendar — Life Dashboard{% endblock %}
 {% block content %}
+    <div class="view-toggle">
+        <a class="view-toggle-tab active" href="{{ url_for('calendar_view') }}">Main Calendar</a>
+        <a class="view-toggle-tab" href="{{ url_for('academic_schedule') }}">Academic Schedule</a>
+    </div>
+
     <div class="page-header">
         <div>
             <h1>
