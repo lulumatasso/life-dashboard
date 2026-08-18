@@ -1437,6 +1437,33 @@ td.expense { color: var(--personal); font-weight: 600; }
     margin: 0;
 }
 
+.schedule-grid.compact .schedule-day-column {
+    min-height: 90px;
+    padding: 8px;
+}
+
+.schedule-grid.compact .schedule-day-header {
+    font-size: 0.7rem;
+    margin-bottom: 6px;
+}
+
+.schedule-grid.compact .schedule-block {
+    padding: 5px 7px;
+    margin-bottom: 5px;
+}
+
+.schedule-grid.compact .schedule-block-time {
+    font-size: 0.64rem;
+}
+
+.schedule-grid.compact .schedule-block-name {
+    font-size: 0.72rem;
+}
+
+.schedule-grid.compact .schedule-block-location {
+    font-size: 0.66rem;
+}
+
 .meeting-row {
     display: flex;
     align-items: center;

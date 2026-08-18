@@ -94,10 +94,36 @@
                     </svg>
                 </span>
                 <h2>Calendar</h2>
-                <span class="panel-subheading">{{ month_name }} {{ year }}</span>
+                <span class="panel-subheading">{% if cal_view == "schedule" %}Weekly schedule{% else %}{{ month_name }} {{ year }}{% endif %}</span>
                 <a class="panel-link" href="{{ url_for('new_event') }}">+ Add Event</a>
                 <a class="panel-link" href="{{ url_for('calendar_view') }}">Open &rarr;</a>
             </div>
+
+            <div class="view-toggle">
+                <a class="view-toggle-tab {% if cal_view != 'schedule' %}active{% endif %}" href="{{ url_for('home', cal_view='month') }}">Main Calendar</a>
+                <a class="view-toggle-tab {% if cal_view == 'schedule' %}active{% endif %}" href="{{ url_for('home', cal_view='schedule') }}">Academic Schedule</a>
+            </div>
+
+            {% if cal_view == "schedule" %}
+            <div class="schedule-grid compact">
+                {% for day_num in range(7) %}
+                <div class="schedule-day-column">
+                    <div class="schedule-day-header">{{ weekdays[day_num][:3] }}</div>
+                    {% if meetings_by_day[day_num] %}
+                    {% for row in meetings_by_day[day_num] %}
+                    <a class="schedule-block" href="{{ url_for('course_detail', course_id=row.course.id) }}" style="background: {{ row.color }}1a; border-left-color: {{ row.color }};">
+                        <span class="schedule-block-time">{{ row.time_label }}</span>
+                        <span class="schedule-block-name">{{ row.course.name }}</span>
+                        {% if row.meeting.location %}<span class="schedule-block-location">{{ row.meeting.location }}</span>{% endif %}
+                    </a>
+                    {% endfor %}
+                    {% else %}
+                    <p class="schedule-day-empty">&mdash;</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
             <div class="calendar-widget-layout">
                 <table class="calendar-grid compact">
                     <thead>
@@ -145,6 +171,7 @@
                     {% endif %}
                 </div>
             </div>
+            {% endif %}
         </div>
 
         <div class="panel">

@@ -104,6 +104,25 @@ def course_color(course):
     return CATEGORY_COLOR_PALETTE[course.id % len(CATEGORY_COLOR_PALETTE)]
 
 
+def build_meetings_by_day():
+    """Every class's recurring weekly meetings, grouped by day (0=Monday ... 6=Sunday)."""
+    courses = Course.query.all()
+    meetings_by_day = {i: [] for i in range(7)}
+    for course in courses:
+        for m in course.meetings:
+            meetings_by_day[m.day_of_week].append(
+                {
+                    "course": course,
+                    "meeting": m,
+                    "time_label": format_time_range(m.start_time, m.end_time),
+                    "color": course_color(course),
+                }
+            )
+    for day_meetings in meetings_by_day.values():
+        day_meetings.sort(key=lambda row: row["meeting"].start_time)
+    return meetings_by_day
+
+
 def parse_time(raw):
     return datetime.strptime(raw, "%H:%M").time() if raw else None
 
@@ -243,6 +262,9 @@ def home():
                 upcoming_events.append({**e, "date": date(today.year, today.month, day)})
     upcoming_events.sort(key=lambda e: e["date"])
 
+    cal_view = request.args.get("cal_view", "month")
+    meetings_by_day = build_meetings_by_day()
+
     return render_template(
         "home.html",
         name="AvaLucia",
@@ -251,6 +273,9 @@ def home():
         upcoming_assignments=upcoming_assignments,
         recent_applications=recent_applications,
         active_applications=active_applications,
+        cal_view=cal_view,
+        meetings_by_day=meetings_by_day,
+        weekdays=WEEKDAYS,
         todos=todos,
         habit_rows=habit_rows,
         upcoming_events=upcoming_events,
@@ -618,21 +643,7 @@ def calendar_view():
 
 @app.route("/calendar/schedule")
 def academic_schedule():
-    courses = Course.query.all()
-    meetings_by_day = {i: [] for i in range(7)}
-    for course in courses:
-        for m in course.meetings:
-            meetings_by_day[m.day_of_week].append(
-                {
-                    "course": course,
-                    "meeting": m,
-                    "time_label": format_time_range(m.start_time, m.end_time),
-                    "color": course_color(course),
-                }
-            )
-    for day_meetings in meetings_by_day.values():
-        day_meetings.sort(key=lambda row: row["meeting"].start_time)
-    return render_template("academic_schedule.html", meetings_by_day=meetings_by_day, weekdays=WEEKDAYS)
+    return render_template("academic_schedule.html", meetings_by_day=build_meetings_by_day(), weekdays=WEEKDAYS)
 
 
 @app.route("/calendar/events/new", methods=["GET", "POST"])
