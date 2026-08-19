@@ -395,6 +395,22 @@ form.stack input:focus, form.stack select:focus, form.stack textarea:focus {
     background: var(--surface-sunken);
 }
 
+.assignment-table tr.row-graded {
+    background: rgba(122, 145, 113, 0.10);
+}
+
+.assignment-table tr.row-submitted {
+    background: rgba(92, 114, 133, 0.08);
+}
+
+.assignment-table tr.row-graded:hover {
+    background: rgba(122, 145, 113, 0.16);
+}
+
+.assignment-table tr.row-submitted:hover {
+    background: rgba(92, 114, 133, 0.14);
+}
+
 .status-pill {
     display: inline-block;
     font-size: 0.75rem;
