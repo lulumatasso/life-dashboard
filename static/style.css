@@ -1540,3 +1540,54 @@ td.expense { color: var(--personal); font-weight: 600; }
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+.view-toggle-sub {
+    margin-top: -10px;
+    transform: scale(0.92);
+    transform-origin: left;
+}
+
+.week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 12px;
+}
+
+.week-day-column {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    min-height: 220px;
+}
+
+.week-day-column.today {
+    border-color: var(--accent);
+    background: rgba(92, 114, 133, 0.05);
+}
+
+.week-day-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.week-day-name {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.week-event {
+    font-size: 0.78rem;
+    padding: 4px 8px;
+}
+
+@media (max-width: 900px) {
+    .week-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

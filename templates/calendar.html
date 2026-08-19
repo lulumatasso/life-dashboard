@@ -6,6 +6,11 @@
         <a class="view-toggle-tab" href="{{ url_for('academic_schedule') }}">Academic Schedule</a>
     </div>
 
+    <div class="view-toggle view-toggle-sub">
+        <a class="view-toggle-tab {% if view != 'week' %}active{% endif %}" href="{{ url_for('calendar_view', view='month') }}">Month</a>
+        <a class="view-toggle-tab {% if view == 'week' %}active{% endif %}" href="{{ url_for('calendar_view', view='week', date=today.isoformat()) }}">Week</a>
+    </div>
+
     <div class="page-header">
         <div>
             <h1>
@@ -18,15 +23,45 @@
                 </span>
                 Calendar
             </h1>
-            <p class="subtitle">{{ month_name }} {{ year }}</p>
+            <p class="subtitle">
+                {% if view == "week" %}
+                {{ week_start.strftime('%b %d') }} &ndash; {{ week_end.strftime('%b %d, %Y') }}
+                {% else %}
+                {{ month_name }} {{ year }}
+                {% endif %}
+            </p>
         </div>
         <div class="calendar-nav">
+            {% if view == "week" %}
+            <a class="btn btn-secondary" href="{{ url_for('calendar_view', view='week', date=prev_week_date) }}">&larr; Prev</a>
+            <a class="btn btn-secondary" href="{{ url_for('calendar_view', view='week', date=next_week_date) }}">Next &rarr;</a>
+            {% else %}
             <a class="btn btn-secondary" href="{{ url_for('calendar_view', year=prev_year, month=prev_month) }}">&larr; Prev</a>
             <a class="btn btn-secondary" href="{{ url_for('calendar_view', year=next_year, month=next_month) }}">Next &rarr;</a>
+            {% endif %}
             <a class="btn" href="{{ url_for('new_event') }}">+ Add Event</a>
         </div>
     </div>
 
+    {% if view == "week" %}
+    <div class="week-grid">
+        {% for day in days %}
+        <div class="week-day-column {% if day.date == today %}today{% endif %}">
+            <div class="week-day-header">
+                <span class="week-day-name">{{ day.date.strftime('%a') }}</span>
+                <a class="calendar-day-number" href="{{ url_for('new_event', date=day.date.isoformat()) }}">{{ day.date.day }}</a>
+            </div>
+            {% if day.events %}
+            {% for event in day.events %}
+            <a class="calendar-event week-event" href="{{ event.url }}" style="background: {{ event.color }};">{% if event.time_label %}<span class="event-time">{{ event.time_label }}</span> {% endif %}{{ event.title }}</a>
+            {% endfor %}
+            {% else %}
+            <p class="schedule-day-empty">&mdash;</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
     <table class="calendar-grid">
         <thead>
             <tr>
@@ -52,4 +87,5 @@
             {% endfor %}
         </tbody>
     </table>
+    {% endif %}
 {% endblock %}

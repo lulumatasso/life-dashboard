@@ -137,19 +137,14 @@ def format_time_range(start_time, end_time):
     return label
 
 
-def get_month_calendar(year, month):
-    """Aggregate events from every module into one month's calendar grid."""
-    weeks = cal_module.Calendar(firstweekday=6).monthdayscalendar(year, month)
-    days_in_month = cal_module.monthrange(year, month)[1]
-    start = date(year, month, 1)
-    end = date(year, month, days_in_month)
-
-    events_by_day = {}
+def gather_events_by_date(start, end):
+    """Aggregate events from every module into a dict keyed by date, for the inclusive range [start, end]."""
+    events_by_date = {}
 
     assignments = Assignment.query.filter(Assignment.due_date >= start, Assignment.due_date <= end).all()
     for a in assignments:
         color = (a.category.color if a.category else None) or EVENT_CATEGORY_COLORS["academic"]
-        events_by_day.setdefault(a.due_date.day, []).append(
+        events_by_date.setdefault(a.due_date, []).append(
             {
                 "title": f"{a.name} — {a.course.name}",
                 "category": "academic",
@@ -162,7 +157,7 @@ def get_month_calendar(year, month):
         Application.follow_up_date >= start, Application.follow_up_date <= end
     ).all()
     for a in followups:
-        events_by_day.setdefault(a.follow_up_date.day, []).append(
+        events_by_date.setdefault(a.follow_up_date, []).append(
             {
                 "title": f"Follow up: {a.company}",
                 "category": "professional",
@@ -175,18 +170,18 @@ def get_month_calendar(year, month):
         Transaction.is_recurring.is_(True), Transaction.date >= start, Transaction.date <= end
     ).all()
     for t in bills:
-        events_by_day.setdefault(t.date.day, []).append(
+        events_by_date.setdefault(t.date, []).append(
             {
                 "title": t.description,
                 "category": "financial",
                 "color": EVENT_CATEGORY_COLORS["financial"],
-                "url": url_for("budget", year=year, month=month),
+                "url": url_for("budget", year=t.date.year, month=t.date.month),
             }
         )
 
     custom_events = Event.query.filter(Event.date >= start, Event.date <= end).all()
     for e in custom_events:
-        events_by_day.setdefault(e.date.day, []).append(
+        events_by_date.setdefault(e.date, []).append(
             {
                 "title": e.title,
                 "time_label": format_time_range(e.start_time, e.end_time),
@@ -195,6 +190,19 @@ def get_month_calendar(year, month):
                 "url": url_for("edit_event", event_id=e.id),
             }
         )
+
+    return events_by_date
+
+
+def get_month_calendar(year, month):
+    """Aggregate events from every module into one month's calendar grid."""
+    weeks = cal_module.Calendar(firstweekday=6).monthdayscalendar(year, month)
+    days_in_month = cal_module.monthrange(year, month)[1]
+    start = date(year, month, 1)
+    end = date(year, month, days_in_month)
+
+    events_by_date = gather_events_by_date(start, end)
+    events_by_day = {d.day: events for d, events in events_by_date.items()}
 
     prev_month, prev_year = (12, year - 1) if month == 1 else (month - 1, year)
     next_month, next_year = (1, year + 1) if month == 12 else (month + 1, year)
@@ -209,6 +217,22 @@ def get_month_calendar(year, month):
         "prev_month": prev_month,
         "next_year": next_year,
         "next_month": next_month,
+    }
+
+
+def get_week_calendar(anchor):
+    """Aggregate events into a Sunday-start week view containing the anchor date."""
+    offset = (anchor.weekday() + 1) % 7  # Python: Mon=0..Sun=6; we want the week to start Sunday
+    week_start = anchor - timedelta(days=offset)
+    week_dates = [week_start + timedelta(days=i) for i in range(7)]
+    events_by_date = gather_events_by_date(week_dates[0], week_dates[-1])
+
+    return {
+        "days": [{"date": d, "events": events_by_date.get(d, [])} for d in week_dates],
+        "week_start": week_dates[0],
+        "week_end": week_dates[-1],
+        "prev_week_date": (anchor - timedelta(days=7)).isoformat(),
+        "next_week_date": (anchor + timedelta(days=7)).isoformat(),
     }
 
 
@@ -660,10 +684,16 @@ def review_syllabus(course_id):
 @app.route("/calendar")
 def calendar_view():
     today = date.today()
+    view = request.args.get("view", "month")
+    if view == "week":
+        anchor_raw = request.args.get("date")
+        anchor = datetime.strptime(anchor_raw, "%Y-%m-%d").date() if anchor_raw else today
+        week_ctx = get_week_calendar(anchor)
+        return render_template("calendar.html", today=today, view=view, **week_ctx)
     year = request.args.get("year", type=int) or today.year
     month = request.args.get("month", type=int) or today.month
     month_ctx = get_month_calendar(year, month)
-    return render_template("calendar.html", today=today, **month_ctx)
+    return render_template("calendar.html", today=today, view=view, **month_ctx)
 
 
 @app.route("/calendar/schedule")
