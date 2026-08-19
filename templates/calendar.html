@@ -41,7 +41,7 @@
                 <td class="calendar-cell empty"></td>
                 {% else %}
                 <td class="calendar-cell {% if year == today.year and month == today.month and day == today.day %}today{% endif %}">
-                    <div class="calendar-day-number">{{ day }}</div>
+                    <a class="calendar-day-number" href="{{ url_for('new_event', date='%04d-%02d-%02d'|format(year, month, day)) }}">{{ day }}</a>
                     {% for event in events_by_day.get(day, []) %}
                     <a class="calendar-event" href="{{ event.url }}" style="background: {{ event.color }};">{% if event.time_label %}<span class="event-time">{{ event.time_label }}</span> {% endif %}{{ event.title }}</a>
                     {% endfor %}

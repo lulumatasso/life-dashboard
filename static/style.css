@@ -550,10 +550,20 @@ form.stack input:focus, form.stack select:focus, form.stack textarea:focus {
 }
 
 .calendar-day-number {
+    display: inline-block;
     font-weight: 600;
     font-size: 0.82rem;
     margin-bottom: 4px;
     color: var(--text-muted);
+    text-decoration: none;
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 1px 5px;
+}
+
+.calendar-day-number:hover {
+    background: var(--accent);
+    color: #fff;
 }
 
 .calendar-cell.today .calendar-day-number {
