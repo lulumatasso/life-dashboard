@@ -125,7 +125,7 @@
         </thead>
         <tbody>
             {% for a in assignments %}
-            <tr class="clickable" onclick="window.location='{{ url_for('edit_assignment', course_id=course.id, assignment_id=a.id) }}'">
+            <tr id="assignment-{{ a.id }}" class="clickable" onclick="window.location='{{ url_for('edit_assignment', course_id=course.id, assignment_id=a.id) }}'">
                 <td>
                     <span {% if a.status in ["Submitted", "Graded"] %}class="assignment-done"{% endif %}>{{ a.name }}</span>
                     {% if a.category %}<span class="badge category-tag" style="background: {{ a.category.color }}26; color: {{ a.category.color }};">{{ a.category.name }}</span>{% endif %}

@@ -2,6 +2,7 @@ import calendar as cal_module
 import io
 import os
 from datetime import date, datetime, timedelta
+from urllib.parse import urlsplit, urlunsplit
 from uuid import uuid4
 
 from dotenv import load_dotenv
@@ -442,7 +443,10 @@ def update_assignment_status(course_id, assignment_id):
     if new_status in STATUS_CHOICES:
         assignment.status = new_status
         db.session.commit()
-    return redirect(request.referrer or url_for("course_detail", course_id=course_id))
+    base = request.referrer or url_for("course_detail", course_id=course_id)
+    parts = urlsplit(base)
+    target = urlunsplit((parts.scheme, parts.netloc, parts.path, parts.query, f"assignment-{assignment_id}"))
+    return redirect(target)
 
 
 @app.route("/classes/<int:course_id>/assignments/new", methods=["GET", "POST"])
