@@ -324,8 +324,14 @@ def edit_class(course_id):
         course.grading_mode = request.form.get("grading_mode") or "percentage"
         db.session.commit()
         return redirect(url_for("course_detail", course_id=course.id))
+    sorted_meetings = sorted(course.meetings, key=lambda m: (m.day_of_week, m.start_time))
     return render_template(
-        "edit_class.html", course=course, grading_modes=GRADING_MODES, palette=CATEGORY_COLOR_PALETTE
+        "edit_class.html",
+        course=course,
+        grading_modes=GRADING_MODES,
+        palette=CATEGORY_COLOR_PALETTE,
+        meetings=sorted_meetings,
+        weekdays=WEEKDAYS,
     )
 
 
@@ -375,13 +381,18 @@ def course_detail(course_id):
     prev_month, prev_year = (12, year - 1) if month == 1 else (month - 1, year)
     next_month, next_year = (1, year + 1) if month == 12 else (month + 1, year)
 
-    sorted_meetings = sorted(course.meetings, key=lambda m: (m.day_of_week, m.start_time))
+    meetings_by_weekday = {i: [] for i in range(5)}
+    for m in sorted(course.meetings, key=lambda m: (m.day_of_week, m.start_time)):
+        if m.day_of_week < 5:
+            meetings_by_weekday[m.day_of_week].append(m)
 
     return render_template(
         "course_detail.html",
         course=course,
         assignments=sorted_assignments,
-        meetings=sorted_meetings,
+        status_choices=STATUS_CHOICES,
+        meetings_by_weekday=meetings_by_weekday,
+        has_meetings=bool(course.meetings),
         weekdays=WEEKDAYS,
         today=today,
         weeks=weeks,
@@ -413,7 +424,7 @@ def new_class_meeting(course_id):
             )
         )
         db.session.commit()
-    return redirect(url_for("course_detail", course_id=course.id))
+    return redirect(url_for("edit_class", course_id=course.id))
 
 
 @app.route("/classes/<int:course_id>/meetings/<int:meeting_id>/delete", methods=["POST"])
@@ -421,7 +432,17 @@ def delete_class_meeting(course_id, meeting_id):
     meeting = ClassMeeting.query.filter_by(id=meeting_id, course_id=course_id).first_or_404()
     db.session.delete(meeting)
     db.session.commit()
-    return redirect(url_for("course_detail", course_id=course_id))
+    return redirect(url_for("edit_class", course_id=course_id))
+
+
+@app.route("/classes/<int:course_id>/assignments/<int:assignment_id>/status", methods=["POST"])
+def update_assignment_status(course_id, assignment_id):
+    assignment = Assignment.query.filter_by(id=assignment_id, course_id=course_id).first_or_404()
+    new_status = request.form.get("status")
+    if new_status in STATUS_CHOICES:
+        assignment.status = new_status
+        db.session.commit()
+    return redirect(request.referrer or url_for("course_detail", course_id=course_id))
 
 
 @app.route("/classes/<int:course_id>/assignments/new", methods=["GET", "POST"])

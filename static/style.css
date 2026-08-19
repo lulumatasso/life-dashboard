@@ -404,6 +404,24 @@ form.stack input:focus, form.stack select:focus, form.stack textarea:focus {
     white-space: nowrap;
 }
 
+.status-pill-select {
+    appearance: none;
+    -webkit-appearance: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.status-pill-select:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+.assignment-done {
+    text-decoration: line-through;
+    color: var(--text-muted);
+}
+
 .status-not-started { background: rgba(138, 128, 113, 0.16); color: var(--text-muted); }
 .status-in-progress { background: rgba(192, 138, 68, 0.16); color: var(--financial); }
 .status-submitted { background: rgba(92, 114, 133, 0.14); color: var(--accent); }
@@ -1382,6 +1400,10 @@ td.expense { color: var(--personal); font-weight: 600; }
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 12px;
+}
+
+.schedule-grid.five-day {
+    grid-template-columns: repeat(5, 1fr);
 }
 
 .schedule-day-column {

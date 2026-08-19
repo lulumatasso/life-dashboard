@@ -38,38 +38,31 @@
     </div>
 
     <div class="card">
-        <h2 class="section-title">Class Schedule</h2>
-        <p class="subtitle">When and where this class meets each week.</p>
-        {% if meetings %}
-        <div class="meeting-list">
-            {% for m in meetings %}
-            <div class="meeting-row">
-                <span class="meeting-day">{{ weekdays[m.day_of_week] }}</span>
-                <span class="meeting-meta">
-                    {{ m.start_time.strftime('%I:%M %p').lstrip('0') }}{% if m.end_time %}–{{ m.end_time.strftime('%I:%M %p').lstrip('0') }}{% endif %}
-                    {% if m.location %} &middot; {{ m.location }}{% endif %}
-                </span>
-                <form method="POST" action="{{ url_for('delete_class_meeting', course_id=course.id, meeting_id=m.id) }}">
-                    <button type="submit" class="todo-delete-btn" aria-label="Delete meeting time">&times;</button>
-                </form>
+        <div class="page-header class-calendar-header">
+            <h2 class="section-title">Class Schedule</h2>
+            <a class="panel-link" href="{{ url_for('edit_class', course_id=course.id) }}">Edit schedule &rarr;</a>
+        </div>
+        {% if has_meetings %}
+        <div class="schedule-grid five-day">
+            {% for day_num in range(5) %}
+            <div class="schedule-day-column">
+                <div class="schedule-day-header">{{ weekdays[day_num][:3] }}</div>
+                {% if meetings_by_weekday[day_num] %}
+                {% for m in meetings_by_weekday[day_num] %}
+                <div class="schedule-block" style="background: #5c72851a; border-left-color: #5c7285;">
+                    <span class="schedule-block-time">{{ m.start_time.strftime('%I:%M %p').lstrip('0') }}{% if m.end_time %}–{{ m.end_time.strftime('%I:%M %p').lstrip('0') }}{% endif %}</span>
+                    {% if m.location %}<span class="schedule-block-location">{{ m.location }}</span>{% endif %}
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="schedule-day-empty">&mdash;</p>
+                {% endif %}
             </div>
             {% endfor %}
         </div>
         {% else %}
-        <p class="subtitle">No meeting times set yet.</p>
+        <p class="subtitle">No meeting times set yet. <a href="{{ url_for('edit_class', course_id=course.id) }}">Add one from the edit page</a>.</p>
         {% endif %}
-        <form class="category-add-form meeting-add-form" method="POST" action="{{ url_for('new_class_meeting', course_id=course.id) }}">
-            <select name="day_of_week" required>
-                <option value="" disabled selected>Day</option>
-                {% for wd in weekdays %}
-                <option value="{{ loop.index0 }}">{{ wd }}</option>
-                {% endfor %}
-            </select>
-            <input type="time" name="start_time" required>
-            <input type="time" name="end_time">
-            <input type="text" name="location" placeholder="Location (optional)">
-            <button class="btn btn-secondary btn-small" type="submit">Add Meeting</button>
-        </form>
     </div>
 
     <div class="grade-summary">
@@ -134,7 +127,7 @@
             {% for a in assignments %}
             <tr class="clickable" onclick="window.location='{{ url_for('edit_assignment', course_id=course.id, assignment_id=a.id) }}'">
                 <td>
-                    {{ a.name }}
+                    <span {% if a.status in ["Submitted", "Graded"] %}class="assignment-done"{% endif %}>{{ a.name }}</span>
                     {% if a.category %}<span class="badge category-tag" style="background: {{ a.category.color }}26; color: {{ a.category.color }};">{{ a.category.name }}</span>{% endif %}
                 </td>
                 <td>{{ a.due_date.strftime("%b %d, %Y") if a.due_date else "—" }}</td>
@@ -153,7 +146,15 @@
                     {% endif %}
                 </td>
                 <td>{% if a.effective_weight is not none %}{{ a.effective_weight|round(2) }}{{ " pts" if course.grading_mode == "points" else "%" }}{% else %}—{% endif %}</td>
-                <td><span class="status-pill status-{{ a.status|lower|replace(' ', '-') }}">{{ a.status }}</span></td>
+                <td onclick="event.stopPropagation()">
+                    <form method="POST" action="{{ url_for('update_assignment_status', course_id=course.id, assignment_id=a.id) }}">
+                        <select name="status" class="status-pill status-pill-select status-{{ a.status|lower|replace(' ', '-') }}" onchange="this.form.submit()">
+                            {% for choice in status_choices %}
+                            <option value="{{ choice }}" {% if a.status == choice %}selected{% endif %}>{{ choice }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </td>
                 <td>{% if a.grade is not none %}{{ a.grade }}{{ " pts" if course.grading_mode == "points" else "%" }}{% else %}—{% endif %}</td>
             </tr>
             {% endfor %}
