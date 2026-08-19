@@ -43,6 +43,17 @@
         </div>
     </div>
 
+    {% if legend %}
+    <div class="calendar-legend">
+        {% for item in legend %}
+        <span class="legend-item">
+            <span class="legend-dot" style="background: {{ item.color }};"></span>
+            {{ item.name }}
+        </span>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     {% if view == "week" %}
     <div class="week-grid">
         {% for day in days %}

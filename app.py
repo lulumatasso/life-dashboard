@@ -143,12 +143,11 @@ def gather_events_by_date(start, end):
 
     assignments = Assignment.query.filter(Assignment.due_date >= start, Assignment.due_date <= end).all()
     for a in assignments:
-        color = (a.category.color if a.category else None) or EVENT_CATEGORY_COLORS["academic"]
         events_by_date.setdefault(a.due_date, []).append(
             {
                 "title": f"{a.name} — {a.course.name}",
                 "category": "academic",
-                "color": color,
+                "color": course_color(a.course),
                 "url": url_for("course_detail", course_id=a.course_id),
             }
         )
@@ -179,7 +178,9 @@ def gather_events_by_date(start, end):
             }
         )
 
-    custom_events = Event.query.filter(Event.date >= start, Event.date <= end).all()
+    custom_events = Event.query.filter(
+        Event.date >= start, Event.date <= end, Event.course_id.is_(None)
+    ).all()
     for e in custom_events:
         events_by_date.setdefault(e.date, []).append(
             {
@@ -685,15 +686,16 @@ def review_syllabus(course_id):
 def calendar_view():
     today = date.today()
     view = request.args.get("view", "month")
+    legend = [{"name": c.name, "color": course_color(c)} for c in Course.query.all()]
     if view == "week":
         anchor_raw = request.args.get("date")
         anchor = datetime.strptime(anchor_raw, "%Y-%m-%d").date() if anchor_raw else today
         week_ctx = get_week_calendar(anchor)
-        return render_template("calendar.html", today=today, view=view, **week_ctx)
+        return render_template("calendar.html", today=today, view=view, legend=legend, **week_ctx)
     year = request.args.get("year", type=int) or today.year
     month = request.args.get("month", type=int) or today.month
     month_ctx = get_month_calendar(year, month)
-    return render_template("calendar.html", today=today, view=view, **month_ctx)
+    return render_template("calendar.html", today=today, view=view, legend=legend, **month_ctx)
 
 
 @app.route("/calendar/schedule")
