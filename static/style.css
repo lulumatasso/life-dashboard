@@ -1613,3 +1613,17 @@ td.expense { color: var(--personal); font-weight: 600; }
     border-radius: 50%;
     flex-shrink: 0;
 }
+
+.week-grid.compact .week-day-column {
+    min-height: 120px;
+    padding: 8px;
+}
+
+.week-grid.compact .week-day-name {
+    font-size: 0.68rem;
+}
+
+.week-grid.compact .week-event {
+    font-size: 0.68rem;
+    padding: 3px 6px;
+}

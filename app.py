@@ -369,24 +369,12 @@ def delete_class(course_id):
     return redirect(url_for("classes"))
 
 
-@app.route("/classes/<int:course_id>")
-def course_detail(course_id):
-    course = Course.query.get_or_404(course_id)
-    today = date.today()
-    sorted_assignments = sorted(course.assignments, key=lambda a: (a.due_date is None, a.due_date or date.max))
-
-    year = request.args.get("year", type=int) or today.year
-    month = request.args.get("month", type=int) or today.month
-    weeks = cal_module.Calendar(firstweekday=6).monthdayscalendar(year, month)
-    days_in_month = cal_module.monthrange(year, month)[1]
-    start = date(year, month, 1)
-    end = date(year, month, days_in_month)
-
-    events_by_day = {}
+def gather_course_events_by_date(course, start, end):
+    events_by_date = {}
     for a in course.assignments:
         if a.due_date and start <= a.due_date <= end:
             color = (a.category.color if a.category else None) or EVENT_CATEGORY_COLORS["academic"]
-            events_by_day.setdefault(a.due_date.day, []).append(
+            events_by_date.setdefault(a.due_date, []).append(
                 {
                     "title": a.name,
                     "color": color,
@@ -395,7 +383,7 @@ def course_detail(course_id):
             )
     for e in course.events:
         if start <= e.date <= end:
-            events_by_day.setdefault(e.date.day, []).append(
+            events_by_date.setdefault(e.date, []).append(
                 {
                     "title": e.title,
                     "time_label": format_time_range(e.start_time, e.end_time),
@@ -403,17 +391,61 @@ def course_detail(course_id):
                     "url": url_for("edit_event", event_id=e.id),
                 }
             )
+    return events_by_date
+
+
+def get_course_month_calendar(course, year, month):
+    weeks = cal_module.Calendar(firstweekday=6).monthdayscalendar(year, month)
+    days_in_month = cal_module.monthrange(year, month)[1]
+    start = date(year, month, 1)
+    end = date(year, month, days_in_month)
+
+    events_by_date = gather_course_events_by_date(course, start, end)
+    events_by_day = {d.day: events for d, events in events_by_date.items()}
 
     prev_month, prev_year = (12, year - 1) if month == 1 else (month - 1, year)
     next_month, next_year = (1, year + 1) if month == 12 else (month + 1, year)
+
+    return {
+        "weeks": weeks,
+        "events_by_day": events_by_day,
+        "month_name": cal_module.month_name[month],
+        "year": year,
+        "month": month,
+        "prev_year": prev_year,
+        "prev_month": prev_month,
+        "next_year": next_year,
+        "next_month": next_month,
+    }
+
+
+def get_course_week_calendar(course, anchor):
+    offset = (anchor.weekday() + 1) % 7
+    week_start = anchor - timedelta(days=offset)
+    week_dates = [week_start + timedelta(days=i) for i in range(7)]
+    events_by_date = gather_course_events_by_date(course, week_dates[0], week_dates[-1])
+
+    return {
+        "days": [{"date": d, "events": events_by_date.get(d, [])} for d in week_dates],
+        "week_start": week_dates[0],
+        "week_end": week_dates[-1],
+        "prev_week_date": (anchor - timedelta(days=7)).isoformat(),
+        "next_week_date": (anchor + timedelta(days=7)).isoformat(),
+    }
+
+
+@app.route("/classes/<int:course_id>")
+def course_detail(course_id):
+    course = Course.query.get_or_404(course_id)
+    today = date.today()
+    sorted_assignments = sorted(course.assignments, key=lambda a: (a.due_date is None, a.due_date or date.max))
 
     meetings_by_weekday = {i: [] for i in range(5)}
     for m in sorted(course.meetings, key=lambda m: (m.day_of_week, m.start_time)):
         if m.day_of_week < 5:
             meetings_by_weekday[m.day_of_week].append(m)
 
-    return render_template(
-        "course_detail.html",
+    common = dict(
         course=course,
         assignments=sorted_assignments,
         status_choices=STATUS_CHOICES,
@@ -421,17 +453,20 @@ def course_detail(course_id):
         has_meetings=bool(course.meetings),
         weekdays=WEEKDAYS,
         today=today,
-        weeks=weeks,
-        events_by_day=events_by_day,
-        month_name=cal_module.month_name[month],
-        year=year,
-        month=month,
-        prev_year=prev_year,
-        prev_month=prev_month,
-        next_year=next_year,
-        next_month=next_month,
         palette=CATEGORY_COLOR_PALETTE,
     )
+
+    view = request.args.get("view", "month")
+    if view == "week":
+        anchor_raw = request.args.get("date")
+        anchor = datetime.strptime(anchor_raw, "%Y-%m-%d").date() if anchor_raw else today
+        week_ctx = get_course_week_calendar(course, anchor)
+        return render_template("course_detail.html", view=view, **common, **week_ctx)
+
+    year = request.args.get("year", type=int) or today.year
+    month = request.args.get("month", type=int) or today.month
+    month_ctx = get_course_month_calendar(course, year, month)
+    return render_template("course_detail.html", view=view, **common, **month_ctx)
 
 
 @app.route("/classes/<int:course_id>/meetings/new", methods=["POST"])
